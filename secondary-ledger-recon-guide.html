@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Secondary Ledger Reconciliation Report Guide — Oracle Fusion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#FAFAF7;
+  --paper:#FFFFFF;
+  --surface2:#F4F3EE;
+  --surface3:#EDECEA;
+  --border:#D8D4CB;
+  --border2:#C0BAB0;
+  --ink:#18160F;
+  --ink2:#3D3930;
+  --ink3:#7A7468;
+  --ink4:#AAA49A;
+
+  --oracle:#AD2E0A;
+  --oracle-lt:#D94214;
+  --oracle-pale:#FEF2EE;
+  --oracle-border:#F0C0B0;
+
+  --blue:#1A4A8A;
+  --blue-lt:#2563B8;
+  --blue-pale:#EDF3FB;
+  --blue-border:#ACCAE0;
+
+  --amber:#8A5A00;
+  --amber-lt:#B87800;
+  --amber-pale:#FDF6E8;
+  --amber-border:#E8D090;
+
+  --green:#1A6040;
+  --green-lt:#228050;
+  --green-pale:#EBF5EF;
+  --green-border:#A8D8BC;
+
+  --teal:#0A5A5A;
+  --teal-pale:#E8F5F5;
+  --teal-border:#88C8C8;
+
+  --red:#8A1A1A;
+  --red-pale:#FEF0F0;
+  --red-border:#E8A8A8;
+
+  --r:4px;
+}
+
+html{scroll-behavior:smooth}
+body{
+  font-family:'Barlow Condensed',sans-serif;
+  background:var(--bg);
+  color:var(--ink);
+  font-size:16px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── HEADER BAND ── */
+.masthead{
+  background:var(--ink);
+  padding:0 48px;
+  display:flex;
+  align-items:stretch;
+  min-height:180px;
+  position:relative;
+  overflow:hidden;
+}
+.masthead::after{
+  content:'';
+  position:absolute;
+  right:0;top:0;bottom:0;
+  width:40%;
+  background:repeating-linear-gradient(
+    -55deg,transparent,transparent 12px,
+    rgba(255,255,255,0.02) 12px,rgba(255,255,255,0.02) 13px
+  );
+  pointer-events:none;
+}
+.masthead-inner{
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  gap:10px;
+  padding:32px 0;
+  position:relative;
+  z-index:1;
+  max-width:700px;
+}
+.masthead-eyebrow{
+  font-family:'DM Mono',monospace;
+  font-size:10px;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:#6A6458;
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.masthead-eyebrow::before{content:'';display:inline-block;width:32px;height:1px;background:var(--oracle)}
+.masthead h1{
+  font-family:'Libre Baskerville',serif;
+  font-size:clamp(26px,4vw,42px);
+  font-weight:700;
+  color:#F0EDE8;
+  line-height:1.15;
+  letter-spacing:-.01em;
+}
+.masthead-sub{
+  font-family:'Libre Baskerville',serif;
+  font-style:italic;
+  font-size:16px;
+  color:#8A8478;
+  line-height:1.65;
+  max-width:580px;
+}
+.masthead-tags{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.m-tag{
+  font-family:'DM Mono',monospace;
+  font-size:9px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  padding:4px 10px;
+  border:1px solid;
+  border-radius:2px;
+}
+.m-tag-red{border-color:var(--oracle);color:var(--oracle)}
+.m-tag-blue{border-color:#3A6A9A;color:#6A9ACC}
+.m-tag-amber{border-color:#8A6A00;color:#C89020}
+
+/* ── LAYOUT ── */
+.shell{display:grid;grid-template-columns:1fr 300px;max-width:1200px;margin:0 auto;gap:0;align-items:start}
+@media(max-width:960px){.shell{grid-template-columns:1fr}.right-panel{display:none}}
+.main-col{padding:40px 48px 80px;min-width:0}
+.right-panel{padding:32px 28px 80px;border-left:1px solid var(--border);position:sticky;top:0;max-height:100vh;overflow-y:auto}
+
+/* ── SECTION ── */
+.section{margin-bottom:56px}
+.section-label{
+  font-family:'DM Mono',monospace;
+  font-size:9px;
+  letter-spacing:.2em;
+  text-transform:uppercase;
+  color:var(--oracle);
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.section-label::after{content:'';flex:1;height:1px;background:var(--oracle-border)}
+.section h2{
+  font-family:'Libre Baskerville',serif;
+  font-size:26px;
+  font-weight:700;
+  color:var(--ink);
+  margin-bottom:14px;
+  letter-spacing:-.01em;
+  line-height:1.25;
+}
+.section p{
+  color:var(--ink2);
+  font-size:15px;
+  line-height:1.7;
+  margin-bottom:14px;
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:400;
+}
+.section p:last-child{margin-bottom:0}
+
+h3{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:16px;
+  font-weight:700;
+  color:var(--ink);
+  margin:28px 0 10px;
+  text-transform:uppercase;
+  letter-spacing:.04em;
+}
+
+/* ── NAV PATH ── */
+.nav-path{
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:9px 14px;
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+  flex-wrap:wrap;
+}
+.np-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink4);margin-right:4px}
+.np-item{font-family:'DM Mono',monospace;font-size:11px;color:var(--blue-lt);font-weight:500}
+.np-sep{color:var(--border2);font-size:11px}
+
+/* ── CALLOUT ── */
+.callout{
+  border-radius:var(--r);
+  padding:14px 18px;
+  margin-bottom:18px;
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+}
+.callout-icon{font-size:14px;flex-shrink:0;margin-top:2px}
+.callout-body{flex:1}
+.callout-title{
+  font-family:'DM Mono',monospace;
+  font-size:9px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  margin-bottom:5px;
+  display:block;
+  font-weight:500;
+}
+.callout-body p{font-size:13px;color:var(--ink2);margin:0;line-height:1.6}
+.callout-body ul{font-size:13px;color:var(--ink2);padding-left:16px;margin-top:5px}
+.callout-body li{margin-bottom:3px}
+.c-oracle{background:var(--oracle-pale);border:1px solid var(--oracle-border)}
+.c-oracle .callout-title{color:var(--oracle)}
+.c-blue{background:var(--blue-pale);border:1px solid var(--blue-border)}
+.c-blue .callout-title{color:var(--blue)}
+.c-amber{background:var(--amber-pale);border:1px solid var(--amber-border)}
+.c-amber .callout-title{color:var(--amber)}
+.c-green{background:var(--green-pale);border:1px solid var(--green-border)}
+.c-green .callout-title{color:var(--green)}
+
+/* ── REPORT ANATOMY ── */
+.report-mock{
+  background:var(--paper);
+  border:1px solid var(--border2);
+  border-radius:var(--r);
+  overflow:hidden;
+  margin-bottom:24px;
+  font-family:'DM Mono',monospace;
+}
+.report-mock-header{
+  background:var(--ink);
+  padding:10px 18px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.report-mock-title{font-size:11px;color:#D8D4C8;letter-spacing:.06em}
+.report-mock-meta{font-size:9px;color:#5A5848;letter-spacing:.06em}
+.report-table{width:100%;border-collapse:collapse;font-size:11px}
+.report-table th{
+  background:var(--surface2);
+  padding:7px 12px;
+  text-align:left;
+  color:var(--ink3);
+  font-size:9px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  border-bottom:1px solid var(--border);
+  font-weight:500;
+}
+.report-table td{
+  padding:8px 12px;
+  border-bottom:1px solid var(--border);
+  color:var(--ink2);
+  vertical-align:top;
+  line-height:1.4;
+}
+.report-table tr:last-child td{border-bottom:none}
+.report-table tr:nth-child(even) td{background:var(--surface2)}
+.rt-account{color:var(--ink);font-weight:500}
+.rt-primary{color:var(--blue-lt);text-align:right}
+.rt-secondary{color:var(--teal);text-align:right}
+.rt-variance{text-align:right;font-weight:500}
+.rt-var-expected{color:var(--green-lt)}
+.rt-var-warn{color:var(--amber-lt)}
+.rt-var-error{color:var(--oracle-lt)}
+.rt-type{font-size:9px;letter-spacing:.06em}
+.report-table .subtotal td{background:var(--surface3);font-weight:600;color:var(--ink)}
+.report-table .subtotal .rt-primary,.report-table .subtotal .rt-secondary,.report-table .subtotal .rt-variance{font-weight:700}
+.report-section-row td{
+  background:var(--ink);
+  color:#C8C4B8;
+  font-size:9px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  padding:5px 12px;
+}
+
+/* ── VARIANCE TYPE CARDS ── */
+.variance-grid{display:flex;flex-direction:column;gap:16px;margin-bottom:24px}
+.variance-card{
+  border-radius:var(--r);
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+.vc-header{
+  padding:14px 20px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+  cursor:pointer;
+  user-select:none;
+}
+.vc-header:hover{filter:brightness(.97)}
+.vc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.vc-type{
+  font-family:'DM Mono',monospace;
+  font-size:9px;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  font-weight:500;
+  flex-shrink:0;
+  width:100px;
+}
+.vc-title{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:15px;
+  font-weight:700;
+  color:var(--ink);
+  flex:1;
+}
+.vc-badge{
+  font-family:'DM Mono',monospace;
+  font-size:9px;
+  letter-spacing:.08em;
+  padding:3px 8px;
+  border-radius:2px;
+  flex-shrink:0;
+}
+.vc-toggle{font-size:12px;color:var(--ink3);flex-shrink:0;transition:transform .2s}
+.vc-body{
+  padding:0 20px;
+  max-height:0;
+  overflow:hidden;
+  transition:max-height .3s ease, padding .3s;
+  background:var(--paper);
+}
+.variance-card.open .vc-body{max-height:2000px;padding:16px 20px 20px}
+.variance-card.open .vc-toggle{transform:rotate(180deg)}
+.vc-body p{font-size:14px;color:var(--ink2);margin-bottom:10px;line-height:1.65}
+.vc-body h4{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);margin:12px 0 6px}
+
+/* Variance type colours */
+.vt-expected .vc-header{background:var(--green-pale)}
+.vt-expected .vc-dot{background:var(--green-lt)}
+.vt-expected .vc-type{color:var(--green)}
+.vt-expected .vc-badge{background:var(--green-pale);color:var(--green);border:1px solid var(--green-border)}
+
+.vt-timing .vc-header{background:var(--blue-pale)}
+.vt-timing .vc-dot{background:var(--blue-lt)}
+.vt-timing .vc-type{color:var(--blue)}
+.vt-timing .vc-badge{background:var(--blue-pale);color:var(--blue);border:1px solid var(--blue-border)}
+
+.vt-config .vc-header{background:var(--oracle-pale)}
+.vt-config .vc-dot{background:var(--oracle-lt)}
+.vt-config .vc-type{color:var(--oracle)}
+.vt-config .vc-badge{background:var(--oracle-pale);color:var(--oracle);border:1px solid var(--oracle-border)}
+
+.vt-missing .vc-header{background:var(--red-pale)}
+.vt-missing .vc-dot{background:var(--red)}
+.vt-missing .vc-type{color:var(--red)}
+.vt-missing .vc-badge{background:var(--red-pale);color:var(--red);border:1px solid var(--red-border)}
+
+.vt-ok .vc-header{background:var(--teal-pale)}
+.vt-ok .vc-dot{background:var(--teal)}
+.vt-ok .vc-type{color:var(--teal)}
+.vt-ok .vc-badge{background:var(--teal-pale);color:var(--teal);border:1px solid var(--teal-border)}
+
+/* ── INVESTIGATION FLOW ── */
+.inv-flow{display:flex;flex-direction:column;gap:0;margin-bottom:24px}
+.inv-step{display:flex;gap:0;align-items:stretch}
+.inv-line{display:flex;flex-direction:column;align-items:center;width:36px;flex-shrink:0}
+.inv-circle{
+  width:28px;height:28px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'DM Mono',monospace;font-size:11px;font-weight:500;
+  flex-shrink:0;
+  margin-top:4px;
+}
+.inv-connector{flex:1;width:1px;background:var(--border);margin:3px 0}
+.inv-step:last-child .inv-connector{display:none}
+.inv-content{
+  padding:0 0 20px 16px;
+  flex:1;
+}
+.inv-content h4{
+  font-family:'Barlow Condensed',sans-serif;
+  font-size:15px;font-weight:700;
+  color:var(--ink);
+  margin-bottom:4px;
+}
+.inv-content p{font-size:13px;color:var(--ink2);line-height:1.6;margin-bottom:6px}
+.inv-content p:last-child{margin-bottom:0}
+.inv-query{
+  font-family:'DM Mono',monospace;font-size:11px;
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r);padding:8px 12px;
+  color:var(--blue-lt);margin-top:6px;line-height:1.6;
+}
+.step-circ-1{background:var(--blue-pale);color:var(--blue);border:1px solid var(--blue-border)}
+.step-circ-2{background:var(--amber-pale);color:var(--amber);border:1px solid var(--amber-border)}
+.step-circ-3{background:var(--green-pale);color:var(--green);border:1px solid var(--green-border)}
+.step-circ-4{background:var(--oracle-pale);color:var(--oracle);border:1px solid var(--oracle-border)}
+.step-circ-5{background:var(--surface2);color:var(--ink3);border:1px solid var(--border)}
+
+/* ── THRESHOLD TABLE ── */
+.threshold-table{width:100%;border-collapse:collapse;font-size:13px;margin-bottom:18px}
+.threshold-table th{background:var(--ink);color:#D8D4C8;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;text-align:left;font-weight:500}
+.threshold-table td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top;line-height:1.5}
+.threshold-table tr:last-child td{border-bottom:none}
+.threshold-table tr:nth-child(even) td{background:var(--surface2)}
+.th-uc{font-weight:600;color:var(--ink)}
+.th-tol{font-family:'DM Mono',monospace;font-size:11px}
+.tol-tight{color:var(--green)}
+.tol-mid{color:var(--amber-lt)}
+.tol-wide{color:var(--ink3)}
+.th-action{font-size:12px;color:var(--ink3)}
+
+/* ── CLOSE CHECKLIST ── */
+.checklist{display:flex;flex-direction:column;gap:6px;margin-bottom:18px}
+.check-item{
+  display:flex;align-items:flex-start;gap:12px;
+  background:var(--paper);border:1px solid var(--border);
+  border-radius:var(--r);padding:10px 14px;
+  cursor:pointer;transition:all .15s;
+}
+.check-item:hover{border-color:var(--border2);background:var(--surface2)}
+.check-item.checked{border-color:var(--green-border);background:var(--green-pale)}
+.check-box{
+  width:18px;height:18px;border-radius:2px;
+  border:1px solid var(--border2);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-top:1px;
+  font-size:11px;color:transparent;
+  transition:all .15s;
+}
+.check-item.checked .check-box{background:var(--green);border-color:var(--green);color:#fff}
+.check-text{flex:1}
+.check-text strong{font-size:13px;color:var(--ink);display:block;margin-bottom:2px}
+.check-text span{font-size:12px;color:var(--ink3);line-height:1.45}
+.check-item.checked .check-text strong{color:var(--green)}
+.check-owner{
+  font-family:'DM Mono',monospace;font-size:9px;
+  letter-spacing:.06em;color:var(--ink4);
+  flex-shrink:0;padding-top:2px;
+}
+
+.checklist-progress{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r);padding:10px 14px;margin-bottom:12px;
+  display:flex;align-items:center;gap:12px;
+}
+.cp-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink3);flex-shrink:0}
+.cp-track{flex:1;height:3px;background:var(--border);border-radius:2px;overflow:hidden}
+.cp-fill{height:100%;background:var(--green-lt);border-radius:2px;transition:width .3s}
+.cp-count{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);flex-shrink:0}
+
+/* ── SIDEBAR WIDGETS ── */
+.widget{background:var(--paper);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.widget-header{background:var(--surface2);padding:8px 14px;border-bottom:1px solid var(--border)}
+.widget-header span{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3)}
+.widget-body{padding:14px}
+.widget-body p{font-size:12px;color:var(--ink3);margin-bottom:8px;line-height:1.55}
+.widget-body p:last-child{margin-bottom:0}
+.widget-body strong{color:var(--ink2)}
+
+.quick-link{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 0;border-bottom:1px solid var(--border);
+  cursor:pointer;text-decoration:none;
+}
+.quick-link:last-child{border-bottom:none;padding-bottom:0}
+.ql-dot{width:6px;height:6px;border-radius:50%;background:var(--oracle);flex-shrink:0}
+.ql-text{font-size:12px;color:var(--ink2);line-height:1.35}
+.quick-link:hover .ql-text{color:var(--blue-lt)}
+
+.stat-mini{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.sm-item{background:var(--surface2);border-radius:var(--r);padding:8px 10px;text-align:center}
+.sm-val{font-family:'Libre Baskerville',serif;font-size:20px;font-weight:700;color:var(--ink);display:block;line-height:1}
+.sm-lbl{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink4);margin-top:3px;display:block;line-height:1.4}
+
+/* ── INLINE CODE ── */
+code{font-family:'DM Mono',monospace;font-size:11px;background:var(--surface2);color:var(--blue-lt);padding:1px 5px;border-radius:2px;border:1px solid var(--border)}
+hr.rule{border:none;border-top:1px solid var(--border);margin:36px 0}
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="masthead-inner">
+    <div class="masthead-eyebrow">Oracle Fusion GL · Secondary Ledger · Period Close</div>
+    <h1>Reading and Acting on the<br>Secondary Ledger Reconciliation Report</h1>
+    <p class="masthead-sub">What every variance type means, who owns it, how to investigate it, and when it is safe to close.</p>
+    <div class="masthead-tags">
+      <span class="m-tag m-tag-red">Period Close</span>
+      <span class="m-tag m-tag-blue">Secondary Ledger</span>
+      <span class="m-tag m-tag-amber">5 Variance Types</span>
+    </div>
+  </div>
+</header>
+
+<!-- SHELL -->
+<div class="shell">
+
+<!-- ═══ MAIN COLUMN ═══ -->
+<main class="main-col">
+
+  <!-- SECTION 1: WHERE AND HOW TO RUN -->
+  <div class="section" id="s1">
+    <div class="section-label">Section 1</div>
+    <h2>Where to Find It and How to Run It</h2>
+
+    <p>The Secondary Ledger Reconciliation Report is a standard Oracle Fusion report available in the General Ledger responsibility. It compares primary and secondary ledger balances at the account level for a selected period and produces a variance line for every account combination where the two ledgers differ — whether that difference is expected (policy-driven) or unexpected (configuration error or missing transaction).</p>
+
+    <p>Most teams discover this report during their first period close and run it reactively — after the close is already late. The correct approach is to run it in the middle of the period, before subledger close, so variances have time to be investigated and resolved before the deadline.</p>
+
+    <div class="nav-path">
+      <span class="np-label">Path</span>
+      <span class="np-item">General Ledger</span>
+      <span class="np-sep">›</span>
+      <span class="np-item">Period Close</span>
+      <span class="np-sep">›</span>
+      <span class="np-item">Reconciliation</span>
+      <span class="np-sep">›</span>
+      <span class="np-item">Secondary Ledger Reconciliation Report</span>
+    </div>
+
+    <h3>Key Parameters</h3>
+
+    <div class="report-mock">
+      <div class="report-mock-header">
+        <span class="report-mock-title">Run Secondary Ledger Reconciliation Report</span>
+        <span class="report-mock-meta">General Ledger › Period Close › Reconciliation</span>
+      </div>
+      <table class="report-table">
+        <thead><tr><th>Parameter</th><th>Recommended Setting</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td class="rt-account">Primary Ledger</td><td>Your primary ledger</td><td class="rt-type">Required. Select the primary ledger — the secondary ledgers linked to it will be available in the next field.</td></tr>
+          <tr><td class="rt-account">Secondary Ledger</td><td>The secondary ledger to reconcile</td><td class="rt-type">Run separately for each secondary if you have multiple (statutory, tax, pre-consolidation).</td></tr>
+          <tr><td class="rt-account">Accounting Period</td><td>Current open period</td><td class="rt-type">Run for the period being closed. Can also be run for prior periods to investigate historical variances.</td></tr>
+          <tr><td class="rt-account">Balance Type</td><td>Period Activity AND Year-to-Date</td><td class="rt-type">Period activity identifies current-period variances. YTD confirms cumulative position. Run both.</td></tr>
+          <tr><td class="rt-account">Account Filter</td><td>Leave blank (all accounts)</td><td class="rt-type">Filter only if investigating a specific account. For period close, run against all accounts.</td></tr>
+          <tr><td class="rt-account">Show Zero Variances</td><td>No</td><td class="rt-type">Reduces report volume. Accounts with zero variance are correctly reconciled and need no action.</td></tr>
+          <tr><td class="rt-account">Threshold Amount</td><td>Set per use case — see thresholds section</td><td class="rt-type">Variances below threshold still appear but are flagged differently. Do not set so high that genuine errors are suppressed.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout c-blue">
+      <span class="callout-icon">ℹ</span>
+      <div class="callout-body">
+        <span class="callout-title">When to Run</span>
+        <p>Run the report at three points each period: <strong>(1)</strong> Mid-period after the first major Create Accounting batch — catches configuration errors early. <strong>(2)</strong> Before subledger close — all variances must be classified before subledgers are closed. <strong>(3)</strong> After all period-end journals are posted — final sign-off run. The close should not proceed until the final run is reviewed and all variances are either classified as expected or have a resolution plan.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="rule">
+
+  <!-- SECTION 2: READING THE REPORT -->
+  <div class="section" id="s2">
+    <div class="section-label">Section 2</div>
+    <h2>Reading the Report Output</h2>
+    <p>The report output groups accounts by segment hierarchy and shows primary balance, secondary balance, and variance (primary minus secondary) for each account combination. The variance column is what requires interpretation. A non-zero variance is not inherently a problem — it depends entirely on the type of variance.</p>
+
+    <div class="report-mock">
+      <div class="report-mock-header">
+        <span class="report-mock-title">Secondary Ledger Reconciliation — DEC-2024 · Period Activity</span>
+        <span class="report-mock-meta">Primary: UK_CORP_PRIMARY · Secondary: UK_UKGAAP_SEC</span>
+      </div>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th style="width:28%">Account / Description</th>
+            <th style="width:18%;text-align:right">Primary Balance</th>
+            <th style="width:18%;text-align:right">Secondary Balance</th>
+            <th style="width:16%;text-align:right">Variance</th>
+            <th style="width:20%">Variance Type</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="report-section-row"><td colspan="5">BALANCE SHEET — ASSETS</td></tr>
+          <tr>
+            <td><span class="rt-account">1550 · ROU Asset</span></td>
+            <td class="rt-primary">500,000</td>
+            <td class="rt-secondary">—</td>
+            <td class="rt-variance rt-var-expected">500,000</td>
+            <td><span class="rt-type">✓ Expected — IFRS 16 ROU not recognised in secondary</span></td>
+          </tr>
+          <tr>
+            <td><span class="rt-account">1600 · PP&amp;E — Net</span></td>
+            <td class="rt-primary">2,450,000</td>
+            <td class="rt-secondary">2,380,000</td>
+            <td class="rt-variance rt-var-expected">70,000</td>
+            <td><span class="rt-type">✓ Expected — component vs pooled depreciation difference</span></td>
+          </tr>
+          <tr>
+            <td><span class="rt-account">1900 · ECL Provision</span></td>
+            <td class="rt-primary">(380,000)</td>
+            <td class="rt-secondary">(120,000)</td>
+            <td class="rt-variance rt-var-expected">(260,000)</td>
+            <td><span class="rt-type">✓ Expected — ECL vs incurred loss difference</span></td>
+          </tr>
+          <tr>
+            <td><span class="rt-account">1250 · Unbilled AR</span></td>
+            <td class="rt-primary">840,000</td>
+            <td class="rt-secondary">810,000</td>
+            <td class="rt-variance rt-var-warn">30,000</td>
+            <td><span class="rt-type">⚠ Investigate — PoC vs IFRS 15 timing gap</span></td>
+          </tr>
+          <tr>
+            <td><span class="rt-account">1400 · Prepayments</span></td>
+            <td class="rt-primary">95,000</td>
+            <td class="rt-secondary">95,000</td>
+            <td class="rt-variance" style="color:var(--ink3)">—</td>
+            <td><span class="rt-type">✓ Zero variance — no action</span></td>
+          </tr>
+          <tr class="report-section-row"><td colspan="5">BALANCE SHEET — LIABILITIES</td></tr>
+          <tr>
+            <td><span class="rt-account">2850 · Lease Liability</span></td>
+            <td class="rt-primary">(480,000)</td>
+            <td class="rt-secondary">—</td>
+            <td class="rt-variance rt-var-expected">(480,000)</td>
+            <td><span class="rt-type">✓ Expected — IFRS 16 liability not in secondary</span></td>
+          </tr>
+          <tr>
+            <td><span class="rt-account">2500 · Deferred Revenue</span></td>
+            <td class="rt-primary">—</td>
+            <td class="rt-secondary">(220,000)</td>
+            <td class="rt-variance rt-var-expected">220,000</td>
+            <td><span class="rt-type">✓ Expected — deferred under local GAAP, recognised under IFRS 15</span></td>
+          </tr>
+          <tr>
+            <td><span class="rt-account">9999 · Suspense</span></td>
+            <td class="rt-primary">—</td>
+            <td class="rt-secondary">(14,500)</td>
+            <td class="rt-variance rt-var-error">(14,500)</td>
+            <td><span class="rt-type">✗ Error — unmapped accounts posted to suspense</span></td>
+          </tr>
+          <tr class="report-section-row"><td colspan="5">INCOME STATEMENT</td></tr>
+          <tr>
+            <td><span class="rt-account">4000 · Revenue</span></td>
+            <td class="rt-primary">3,840,000</td>
+            <td class="rt-secondary">3,620,000</td>
+            <td class="rt-variance rt-var-expected">220,000</td>
+            <td><span class="rt-type">✓ Expected — matches deferred revenue difference</span></td>
+          </tr>
+          <tr>
+            <td><span class="rt-account">6100 · Depreciation</span></td>
+            <td class="rt-primary">(185,000)</td>
+            <td class="rt-secondary">(210,000)</td>
+            <td class="rt-variance rt-var-expected">25,000</td>
+            <td><span class="rt-type">✓ Expected — stat depreciation rate higher than IFRS</span></td>
+          </tr>
+          <tr>
+            <td><span class="rt-account">6300 · Bad Debt Expense</span></td>
+            <td class="rt-primary">(95,000)</td>
+            <td class="rt-secondary">—</td>
+            <td class="rt-variance rt-var-error">(95,000)</td>
+            <td><span class="rt-type">✗ Missing — bad debt JLR not firing for secondary</span></td>
+          </tr>
+          <tr class="subtotal">
+            <td>Total Unexplained Variance</td>
+            <td class="rt-primary"></td>
+            <td class="rt-secondary"></td>
+            <td class="rt-variance rt-var-error">109,500</td>
+            <td><span class="rt-type" style="color:var(--oracle)">Requires resolution before close</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="callout c-amber">
+      <span class="callout-icon">⚠</span>
+      <div class="callout-body">
+        <span class="callout-title">The Variance Sign Convention</span>
+        <p>Variance = Primary Balance minus Secondary Balance. A positive variance means the primary has a higher balance (or a lower credit balance) than the secondary. A negative variance is the reverse. The sign alone tells you nothing about whether the variance is correct — you need the variance type to determine that.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <hr class="rule">
+
+  <!-- SECTION 3: VARIANCE TYPES -->
+  <div class="section" id="s3">
+    <div class="section-label">Section 3</div>
+    <h2>The Five Variance Types — What Each Means</h2>
+    <p>Every variance in the reconciliation report is one of five types. Classifying the variance correctly is the entire skill of secondary ledger reconciliation — it determines who owns the variance, whether action is required, and whether the period can close. Click each type to expand.</p>
+
+    <div class="variance-grid">
+
+      <!-- TYPE 1: EXPECTED POLICY -->
+      <div class="variance-card vt-expected" id="vc1">
+        <div class="vc-header" onclick="toggleCard('vc1')">
+          <div class="vc-dot"></div>
+          <span class="vc-type">Type 1</span>
+          <span class="vc-title">Expected — Accounting Policy Difference</span>
+          <span class="vc-badge">No action required</span>
+          <span class="vc-toggle">▼</span>
+        </div>
+        <div class="vc-body">
+          <p>The variance exists because the primary and secondary ledgers are <em>supposed</em> to be different. This is the correct behaviour of a well-configured secondary ledger. The variance represents a genuine accounting policy difference between the two standards — IFRS vs local GAAP, standard vs actual cost, IFRS 16 vs operating lease, ECL vs incurred loss.</p>
+          <h4>Characteristics</h4>
+          <p>The variance amount is consistent with the expected policy difference. It can be traced to a specific SLA rule that is functioning correctly. The affected accounts are those defined in the secondary SLAM as having different treatment. The variance has been documented in the secondary ledger design specification.</p>
+          <h4>Examples</h4>
+          <ul>
+            <li>ROU Asset (1550) balance in primary, zero in secondary — IFRS 16 suppressed in secondary</li>
+            <li>Lease Liability (2850) in primary, zero in secondary — same reason</li>
+            <li>ECL Provision (1900) larger in primary than incurred loss provision in secondary</li>
+            <li>Depreciation (6100) differs between books — component vs pooled, different rates</li>
+            <li>Deferred Revenue (2500) in secondary only — IFRS 15 recognised on invoice, local GAAP defers</li>
+          </ul>
+          <h4>Period Close Action</h4>
+          <p>No corrective action required. Document the variance amount in the reconciliation sign-off with reference to the policy difference. The reconciliation note typically reads: <em>"Variance of [amount] on account [X] represents the expected difference between IFRS [treatment] and Local GAAP [treatment] per secondary ledger design. Consistent with prior periods."</em></p>
+          <h4>Red Flag</h4>
+          <p>If the variance amount changes significantly from the prior period without a corresponding change in underlying transactions, investigate. A Type 1 variance that suddenly doubles or disappears without explanation may indicate a SLA rule has stopped firing — reclassify as Type 3 and investigate.</p>
+        </div>
+      </div>
+
+      <!-- TYPE 2: TIMING -->
+      <div class="variance-card vt-timing" id="vc2">
+        <div class="vc-header" onclick="toggleCard('vc2')">
+          <div class="vc-dot"></div>
+          <span class="vc-type">Type 2</span>
+          <span class="vc-title">Timing — Recognition in Different Periods</span>
+          <span class="vc-badge">Monitor — self-correcting</span>
+          <span class="vc-toggle">▼</span>
+        </div>
+        <div class="vc-body">
+          <p>The variance exists because the primary and secondary ledgers recognise the same transaction in different periods — not because the total lifetime recognition differs. The variance will reverse in a future period when the secondary catches up. This is distinct from a permanent policy difference (Type 1) because the total over the life of the transaction will be the same in both ledgers.</p>
+          <h4>Characteristics</h4>
+          <p>The variance reverses in a future period (sometimes the next period, sometimes over the life of a contract or asset). A running total of the variance across periods trends toward zero. The affected accounts are typically revenue, deferred revenue, unbilled AR, or depreciation.</p>
+          <h4>Examples</h4>
+          <ul>
+            <li>Project revenue: IFRS 15 performance obligation recognised in Month 3, local PoC in Month 4 — Month 3 shows variance, Month 4 reverses it</li>
+            <li>Lease rental: IFRS 16 interest and depreciation front-loaded vs straight-line rental in secondary — timing difference that narrows over lease term</li>
+            <li>Unbilled AR: primary recognises unbilled on completion milestone, secondary on cash receipt — variance clears on receipt</li>
+            <li>Prepayment: primary expenses over service period, secondary expenses on payment date — timing difference over the prepayment period</li>
+          </ul>
+          <h4>Period Close Action</h4>
+          <p>Document as a timing variance with the expected reversal period. No corrective journal required. Track across periods to confirm self-correction. If the variance does not reverse within the expected period, reclassify and investigate.</p>
+        </div>
+      </div>
+
+      <!-- TYPE 3: CONFIGURATION -->
+      <div class="variance-card vt-config" id="vc3">
+        <div class="vc-header" onclick="toggleCard('vc3')">
+          <div class="vc-dot"></div>
+          <span class="vc-type">Type 3</span>
+          <span class="vc-title">Configuration Error — SLA Rule Not Firing</span>
+          <span class="vc-badge">Urgent — resolve before close</span>
+          <span class="vc-toggle">▼</span>
+        </div>
+        <div class="vc-body">
+          <p>The variance exists because a secondary ledger SLA rule is not firing when it should, is firing when it should not, or is deriving the wrong account. The secondary ledger is producing incorrect accounting — not just different accounting. This must be resolved before the period closes.</p>
+          <h4>Characteristics</h4>
+          <p>The variance appears on an account that should either have a zero variance (accounts with no policy difference) or a known, stable variance (accounts with documented policy differences where the variance is suddenly a different amount or on a different account than expected). The variance does not match any documented policy difference.</p>
+          <h4>Examples</h4>
+          <ul>
+            <li>Bad Debt Expense (6300) has a large variance in secondary with no corresponding provision account entry — bad debt JLR condition missing or priority too low</li>
+            <li>Revenue (4000) shows a large unexpected variance in a period with no new subscription contracts — deferred revenue rule firing for incorrect transaction type</li>
+            <li>FA depreciation variance much larger than expected — statutory asset book running wrong depreciation rate</li>
+            <li>PPV appearing in secondary ledger when it should not — PPV suppression JLR missing for secondary</li>
+          </ul>
+          <h4>Investigation Steps</h4>
+          <p>Navigate to <strong>Subledger Accounting › Accounting Event Inquiry</strong>. Filter by the affected subledger, period, and account. Examine the Create Accounting output for specific transactions that show the unexpected secondary entry. Check which JLR fired for the secondary ledger line — if the wrong JLR fired, the priority or condition is incorrect. If no secondary line was created, the JLR condition is not matching.</p>
+          <div class="inv-query">SLA › Accounting Event Inquiry<br>Filter: Ledger = [Secondary] · Account = [affected] · Period = [current]<br>→ Examine Journal Line Type and JLR Name for each secondary line</div>
+          <h4>Period Close Action</h4>
+          <p>Fix the SLA rule in the current period if the number of affected transactions is small. If the volume is high or the fix cannot be completed before close, post a manual correcting journal to the secondary ledger for the current period amount and fix the SLA rule in the following period. Document the issue and resolution in the reconciliation sign-off.</p>
+        </div>
+      </div>
+
+      <!-- TYPE 4: MISSING TRANSACTION -->
+      <div class="variance-card vt-missing" id="vc4">
+        <div class="vc-header" onclick="toggleCard('vc4')">
+          <div class="vc-dot"></div>
+          <span class="vc-type">Type 4</span>
+          <span class="vc-title">Missing Transaction — Secondary Has No Entry</span>
+          <span class="vc-badge">Urgent — process gap</span>
+          <span class="vc-toggle">▼</span>
+        </div>
+        <div class="vc-body">
+          <p>The variance exists because a transaction was processed in the primary ledger but has no corresponding entry in the secondary ledger. The most common cause is that the secondary period was closed (or was not yet open) when Create Accounting ran for the primary, meaning the primary accounting was created but the secondary accounting was not.</p>
+          <h4>Characteristics</h4>
+          <p>The variance appears on a large number of accounts simultaneously (not just one or two). The variance amount is exactly equal to a specific batch of primary transactions. The secondary ledger has fewer journal lines than the primary for the same source and period. Often discovered when the period-end Create Accounting batch ran before the secondary period was opened.</p>
+          <h4>Examples</h4>
+          <ul>
+            <li>Secondary period not open when nightly Create Accounting ran — multiple accounts show identical imbalance</li>
+            <li>Subledger period (e.g., AP) open for primary but not for secondary — AP invoices not in secondary</li>
+            <li>Create Accounting run with explicit primary-only scope parameter — secondary excluded by error</li>
+            <li>Secondary ledger added post-go-live with no historical balance migration — all prior-period accounts show variances</li>
+          </ul>
+          <h4>Investigation Steps</h4>
+          <p>Check the Create Accounting execution report for the period. Look for any transactions where the secondary ledger shows "Unaccounted" status while the primary shows "Accounted". Navigate to <strong>Accounting › Create Accounting › Review Accounting Events</strong> and filter by secondary ledger status = Unaccounted.</p>
+          <div class="inv-query">Accounting › Create Accounting › Review Accounting Events<br>Filter: Ledger = [Secondary] · Status = Unaccounted · Period = [current]<br>→ Identify unprocessed events for secondary</div>
+          <h4>Period Close Action</h4>
+          <p>Open the secondary period if it is closed. Run Create Accounting again with both primary and secondary ledger scope. If the secondary period has been permanently closed, you must create manual journals to the secondary ledger to replicate the missing accounting. This is the most time-consuming recovery — automation of period open (as described in the configuration guide) prevents it entirely.</p>
+        </div>
+      </div>
+
+      <!-- TYPE 5: SUSPENSE -->
+      <div class="variance-card vt-ok" id="vc5">
+        <div class="vc-header" onclick="toggleCard('vc5')">
+          <div class="vc-dot"></div>
+          <span class="vc-type">Type 5</span>
+          <span class="vc-title">Suspense Balance — CoA Mapping Gap</span>
+          <span class="vc-badge">Urgent — mapping error</span>
+          <span class="vc-toggle">▼</span>
+        </div>
+        <div class="vc-body">
+          <p>The secondary ledger suspense account has a non-zero balance. This means Create Accounting could not derive a valid secondary ledger account for one or more transactions — the CoA Mapping Set has a gap. Transactions with no valid mapping route are posted to suspense rather than failing entirely, which means the secondary ledger is technically balanced but the suspense account balance has no business meaning.</p>
+          <h4>Characteristics</h4>
+          <p>Account 9999 (or whatever your secondary ledger suspense account is) shows a balance in the report. The variance is always on the suspense account specifically. Other accounts may appear in balance because the offsetting entry went to suspense rather than to the correct account. This is particularly deceptive — the report may look mostly clean but the suspense balance means other accounts are understated.</p>
+          <h4>Examples</h4>
+          <ul>
+            <li>New primary account created during the period — not yet added to the CoA mapping set</li>
+            <li>New cost center or segment value combination not covered by mapping rules</li>
+            <li>Account rule exception not configured for a new transaction type introduced this period</li>
+            <li>Post-go-live addition of a new legal entity or business unit whose accounts are not in the mapping set</li>
+          </ul>
+          <h4>Investigation Steps</h4>
+          <p>Navigate to the secondary ledger suspense account in Account Inquiry. Drill down to see which journals posted to suspense and from which source transactions. The journal description will typically contain the primary account that could not be mapped. Add the missing account(s) to the CoA Mapping Set and reprocess the affected transactions.</p>
+          <div class="inv-query">GL › Accounting › Account Inquiry<br>Ledger = [Secondary] · Account = 9999 (Suspense) · Period = [current]<br>→ Drill to journals → identify unmapped primary accounts<br><br>Setup › Manage Chart of Accounts Mappings<br>→ Add missing segment rules → Reprocess transactions</div>
+          <h4>Period Close Action</h4>
+          <p>The suspense account must be zero at period close. Fix the mapping set, reprocess the affected transactions, and confirm the suspense account clears. Do not post a manual journal to clear suspense — this masks the mapping gap and leaves the underlying account incorrectly stated. Fix the root cause.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <!-- SECTION 4: INVESTIGATION WORKFLOW -->
+  <div class="section" id="s4">
+    <div class="section-label">Section 4</div>
+    <h2>Investigation Workflow — Any Unexplained Variance</h2>
+    <p>When a variance appears on the reconciliation report that cannot immediately be classified as Type 1 (expected policy difference), follow this sequence. The goal is to classify the variance as one of the five types and either confirm it requires no action or identify the specific resolution step.</p>
+
+    <div class="inv-flow">
+      <div class="inv-step">
+        <div class="inv-line">
+          <div class="inv-circle step-circ-1">1</div>
+          <div class="inv-connector"></div>
+        </div>
+        <div class="inv-content">
+          <h4>Check the Design Specification</h4>
+          <p>Before investigating in the system, check the secondary ledger design document. Is this account listed as having an expected policy difference? If yes, does the variance amount match the expectation? If yes — Type 1, no action. If the amount is materially different from expectation, proceed to Step 2.</p>
+          <p>If the account is not in the design specification at all — it should have zero variance — proceed immediately to Step 3.</p>
+        </div>
+      </div>
+
+      <div class="inv-step">
+        <div class="inv-line">
+          <div class="inv-circle step-circ-2">2</div>
+          <div class="inv-connector"></div>
+        </div>
+        <div class="inv-content">
+          <h4>Check for Suspense</h4>
+          <p>Before doing anything else, check the secondary ledger suspense account balance. A non-zero suspense balance means some of the variance you are seeing on substantive accounts is actually the offset of a mapping error. Clear suspense first — then re-run the report to see the true variance picture.</p>
+          <div class="inv-query">GL › Account Inquiry · Ledger = [Secondary] · Account = Suspense · Period = [current]<br>→ If balance ≠ 0: fix mapping set → reprocess → re-run report → continue investigation</div>
+        </div>
+      </div>
+
+      <div class="inv-step">
+        <div class="inv-line">
+          <div class="inv-circle step-circ-3">3</div>
+          <div class="inv-connector"></div>
+        </div>
+        <div class="inv-content">
+          <h4>Check Create Accounting Status</h4>
+          <p>Navigate to Create Accounting event inquiry for the secondary ledger. Filter by Unaccounted status and the current period. If there are unaccounted transactions — Type 4 (missing transaction). Open the period and reprocess.</p>
+          <div class="inv-query">Accounting › Review Accounting Events · Ledger = [Secondary] · Status = Unaccounted<br>→ If events exist: open secondary period → Run Create Accounting → re-run recon report</div>
+          <p>If no unaccounted events — the transaction has been processed but the accounting is wrong. Proceed to Step 4.</p>
+        </div>
+      </div>
+
+      <div class="inv-step">
+        <div class="inv-line">
+          <div class="inv-circle step-circ-4">4</div>
+          <div class="inv-connector"></div>
+        </div>
+        <div class="inv-content">
+          <h4>Examine SLA Output for Affected Transactions</h4>
+          <p>Use Accounting Event Inquiry to find the specific transactions contributing to the variance. Drill into the secondary journal lines and check which JLR fired. Compare to which JLR <em>should</em> have fired per the design. Common findings:</p>
+          <ul style="font-size:13px;color:var(--ink2);padding-left:16px;margin-top:6px">
+            <li>Default JLR fired instead of secondary-specific JLR → priority error → fix priority</li>
+            <li>Secondary JLR fired for wrong transaction type → condition error → fix condition</li>
+            <li>No secondary JLR fired at all → JLR missing from SLAM → add JLR to SLAM</li>
+            <li>Secondary JLR derived wrong account → ADR error → fix ADR condition or mapping</li>
+          </ul>
+          <div class="inv-query">SLA › Accounting Event Inquiry · Ledger = [Secondary] · Account = [affected]<br>→ Drill to Journal Lines → check JLR Name on each secondary line<br>→ Compare JLR name to expected SLA design</div>
+        </div>
+      </div>
+
+      <div class="inv-step">
+        <div class="inv-line">
+          <div class="inv-circle step-circ-5">5</div>
+        </div>
+        <div class="inv-content">
+          <h4>Classify, Document, and Action</h4>
+          <p>Once the root cause is identified, classify as Type 1–5, determine the resolution, and document in the reconciliation sign-off. For Type 3 and Type 4 variances, the resolution must be completed (or a compensating manual journal posted and the root cause fix scheduled) before period close sign-off is given.</p>
+          <p>The reconciliation sign-off document should record: account affected, variance amount, variance type, root cause, resolution action, and responsible owner. This is the audit trail for secondary ledger reconciliation.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="rule">
+
+  <!-- SECTION 5: THRESHOLDS -->
+  <div class="section" id="s5">
+    <div class="section-label">Section 5</div>
+    <h2>Setting Variance Thresholds by Use Case</h2>
+    <p>The Secondary Ledger Reconciliation Report allows you to set a threshold amount — variances below the threshold are still reported but treated differently in the alert workflow. The threshold should be set per use case, not as a single organisation-wide number. A threshold set too high suppresses genuine errors; set too low it creates noise that teams stop reading.</p>
+
+    <table class="threshold-table">
+      <thead><tr><th>Use Case / Account Type</th><th>Recommended Tolerance</th><th>Rationale</th><th>Action if Breached</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="th-uc">Statutory — Revenue / P&amp;L</td>
+          <td><span class="th-tol tol-tight">&lt; 0.1% of period revenue</span></td>
+          <td class="th-action">Revenue recognition differences are high-risk for audit. Tight tolerance catches deferred revenue JLR gaps early.</td>
+          <td class="th-action">Immediate investigation. Must be classified before subledger close.</td>
+        </tr>
+        <tr>
+          <td class="th-uc">Statutory — Balance Sheet</td>
+          <td><span class="th-tol tol-tight">&lt; 0.1% of total assets</span></td>
+          <td class="th-action">Balance sheet variances carry into future periods and compound. Tight tolerance prevents accumulation.</td>
+          <td class="th-action">Investigation before GL period close.</td>
+        </tr>
+        <tr>
+          <td class="th-uc">Fixed Assets — Depreciation</td>
+          <td><span class="th-tol tol-mid">± 5% of expected policy difference</span></td>
+          <td class="th-action">Depreciation variance is expected (policy difference). Threshold alerts when variance moves outside the expected policy band — indicating a rate or method error.</td>
+          <td class="th-action">Verify stat asset book depreciation rate has not changed.</td>
+        </tr>
+        <tr>
+          <td class="th-uc">Cost Accounting — Inventory</td>
+          <td><span class="th-tol tol-mid">&lt; 0.5% of inventory balance</span></td>
+          <td class="th-action">Standard vs actual cost difference should be stable within a period. Large movements indicate missed standard cost update or PPV suppression failure.</td>
+          <td class="th-action">Review cost book assignments and PPV JLR conditions.</td>
+        </tr>
+        <tr>
+          <td class="th-uc">Tax Ledger</td>
+          <td><span class="th-tol tol-mid">&lt; 1% of pre-tax profit</span></td>
+          <td class="th-action">Tax temporary differences can legitimately vary. Wider tolerance acceptable — tight monitoring of suspense account is more important here.</td>
+          <td class="th-action">Reconcile to tax provision workpaper. Suspense must be zero regardless of P&amp;L variance.</td>
+        </tr>
+        <tr>
+          <td class="th-uc">Pre-Consolidation (Adj Only)</td>
+          <td><span class="th-tol tol-wide">No threshold — document all</span></td>
+          <td class="th-action">Adjustment-only ledger should have intentional, documented entries only. Every balance requires a specific posted journal — no variance should be unexplained.</td>
+          <td class="th-action">Every variance requires a signed journal approval as supporting documentation.</td>
+        </tr>
+        <tr>
+          <td class="th-uc">Suspense Account (all use cases)</td>
+          <td><span class="th-tol tol-tight">Zero — no tolerance</span></td>
+          <td class="th-action">Any suspense balance indicates a CoA mapping gap. There is no acceptable suspense balance at period close.</td>
+          <td class="th-action">Fix mapping and reprocess before any close activity continues.</td>
+        </tr>
+      </tbody>
+    </table>
+
+  </div>
+
+  <hr class="rule">
+
+  <!-- SECTION 6: PERIOD CLOSE CHECKLIST -->
+  <div class="section" id="s6">
+    <div class="section-label">Section 6</div>
+    <h2>Period Close Checklist — Secondary Ledger Reconciliation</h2>
+    <p>The checklist below covers the minimum steps required to sign off secondary ledger reconciliation for a period close. Click each item to mark it complete. The period should not close until all items are checked.</p>
+
+    <div class="checklist-progress">
+      <span class="cp-label">Completion</span>
+      <div class="cp-track"><div class="cp-fill" id="clFill" style="width:0%"></div></div>
+      <span class="cp-count" id="clCount">0 / 10</span>
+    </div>
+
+    <div class="checklist" id="checklist">
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box">✓</div>
+        <div class="check-text">
+          <strong>Secondary ledger period is open</strong>
+          <span>Confirm secondary GL and all subledger periods (AP, AR, FA, Cost, Projects) are open before any Create Accounting runs</span>
+        </div>
+        <span class="check-owner">Tech / Ops</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box">✓</div>
+        <div class="check-text">
+          <strong>Create Accounting run — Final mode, both ledgers</strong>
+          <span>All subledger transactions processed. Create Accounting execution report shows zero errors for secondary ledger.</span>
+        </div>
+        <span class="check-owner">Tech / Ops</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box">✓</div>
+        <div class="check-text">
+          <strong>Suspense account = zero</strong>
+          <span>Secondary ledger suspense account (account 9999 or equivalent) has zero balance. No CoA mapping gaps outstanding.</span>
+        </div>
+        <span class="check-owner">Finance</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box">✓</div>
+        <div class="check-text">
+          <strong>No unaccounted events in secondary</strong>
+          <span>Create Accounting event inquiry for secondary ledger shows zero transactions with Unaccounted status.</span>
+        </div>
+        <span class="check-owner">Tech / Ops</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box">✓</div>
+        <div class="check-text">
+          <strong>Reconciliation report run and reviewed</strong>
+          <span>Full secondary ledger reconciliation report run for Period Activity and YTD. All variances reviewed by finance lead.</span>
+        </div>
+        <span class="check-owner">Finance</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box">✓</div>
+        <div class="check-text">
+          <strong>All variances classified (Type 1–5)</strong>
+          <span>Every non-zero variance line classified. Type 1 and Type 2 documented. Type 3, 4, 5 resolved or compensating journal posted.</span>
+        </div>
+        <span class="check-owner">Finance</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box">✓</div>
+        <div class="check-text">
+          <strong>Type 1 variances within expected range</strong>
+          <span>Policy difference variances consistent with prior period within defined tolerance. Material movements investigated and explained.</span>
+        </div>
+        <span class="check-owner">Finance</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box">✓</div>
+        <div class="check-text">
+          <strong>Type 3/4/5 variances resolved or compensated</strong>
+          <span>Configuration errors, missing transactions, and suspense items either corrected in system or covered by approved manual journal with SLA fix scheduled.</span>
+        </div>
+        <span class="check-owner">Finance / Tech</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box">✓</div>
+        <div class="check-text">
+          <strong>Reconciliation sign-off document completed</strong>
+          <span>Written reconciliation note documenting all variances, types, amounts, and resolution. Approved by finance controller and retained for audit.</span>
+        </div>
+        <span class="check-owner">Finance Controller</span>
+      </div>
+      <div class="check-item" onclick="toggleCheck(this)">
+        <div class="check-box">✓</div>
+        <div class="check-text">
+          <strong>Secondary ledger period closed</strong>
+          <span>Secondary ledger GL period and all subledger periods closed after sign-off. Closure sequence must mirror primary ledger closure.</span>
+        </div>
+        <span class="check-owner">Finance / Ops</span>
+      </div>
+    </div>
+
+    <div class="callout c-green">
+      <span class="callout-icon">✓</span>
+      <div class="callout-body">
+        <span class="callout-title">Sign-Off Standard</span>
+        <p>The sign-off document should be a standing template completed each period. At minimum it records: run date, period, secondary ledger name, total variance amount, number of variance lines, classification of each line (Type 1–5), any open items and their resolution dates, and sign-off by the finance controller. This document is the primary audit evidence for secondary ledger reconciliation. If it does not exist, the auditor will ask for it — and if it has never existed, that is an audit finding.</p>
+      </div>
+    </div>
+
+  </div>
+
+</main>
+
+<!-- ═══ RIGHT PANEL ═══ -->
+<aside class="right-panel">
+
+  <div class="widget">
+    <div class="widget-header"><span>Quick Navigation</span></div>
+    <div class="widget-body" style="padding:8px 14px 14px">
+      <a class="quick-link" href="#s1"><div class="ql-dot"></div><span class="ql-text">Where to find it &amp; parameters</span></a>
+      <a class="quick-link" href="#s2"><div class="ql-dot"></div><span class="ql-text">Reading the report output</span></a>
+      <a class="quick-link" href="#s3"><div class="ql-dot"></div><span class="ql-text">The five variance types</span></a>
+      <a class="quick-link" href="#s4"><div class="ql-dot"></div><span class="ql-text">Investigation workflow</span></a>
+      <a class="quick-link" href="#s5"><div class="ql-dot"></div><span class="ql-text">Variance thresholds</span></a>
+      <a class="quick-link" href="#s6"><div class="ql-dot"></div><span class="ql-text">Period close checklist</span></a>
+    </div>
+  </div>
+
+  <div class="widget">
+    <div class="widget-header"><span>Variance Type Reference</span></div>
+    <div class="widget-body">
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--green-lt);flex-shrink:0"></div>
+          <span style="font-size:12px;color:var(--ink2)"><strong>Type 1</strong> — Expected policy difference</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--blue-lt);flex-shrink:0"></div>
+          <span style="font-size:12px;color:var(--ink2)"><strong>Type 2</strong> — Timing difference</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--oracle-lt);flex-shrink:0"></div>
+          <span style="font-size:12px;color:var(--ink2)"><strong>Type 3</strong> — SLA rule error</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--red);flex-shrink:0"></div>
+          <span style="font-size:12px;color:var(--ink2)"><strong>Type 4</strong> — Missing transaction</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 0">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0"></div>
+          <span style="font-size:12px;color:var(--ink2)"><strong>Type 5</strong> — Suspense / mapping gap</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="widget">
+    <div class="widget-header"><span>Key Metrics</span></div>
+    <div class="widget-body">
+      <div class="stat-mini">
+        <div class="sm-item"><span class="sm-val">0</span><span class="sm-lbl">Target suspense balance</span></div>
+        <div class="sm-item"><span class="sm-val">3×</span><span class="sm-lbl">Report runs per period</span></div>
+        <div class="sm-item"><span class="sm-val">&lt;0.1%</span><span class="sm-lbl">Target unexplained variance</span></div>
+        <div class="sm-item"><span class="sm-val">10</span><span class="sm-lbl">Close checklist items</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="widget">
+    <div class="widget-header"><span>Critical Rules</span></div>
+    <div class="widget-body">
+      <p><strong>Never clear suspense with a manual journal.</strong> Fix the mapping root cause and reprocess.</p>
+      <p><strong>Run mid-period, not just at close.</strong> Variances discovered late have fewer resolution options.</p>
+      <p><strong>Every variance needs a classification.</strong> "Unknown" is not an acceptable close-off entry.</p>
+      <p><strong>The sign-off document is audit evidence.</strong> If it does not exist in writing, it did not happen.</p>
+    </div>
+  </div>
+
+  <div class="widget">
+    <div class="widget-header"><span>Related Guides</span></div>
+    <div class="widget-body" style="padding:8px 14px 14px">
+      <a class="quick-link" href="#"><div class="ql-dot" style="background:var(--blue-lt)"></div><span class="ql-text">Secondary Ledger Configuration Guide</span></a>
+      <a class="quick-link" href="#"><div class="ql-dot" style="background:var(--blue-lt)"></div><span class="ql-text">Ledger Design Decision Tree</span></a>
+      <a class="quick-link" href="https://simplitconsulting.com/why-one-balancing-segment-was-never-enough/"><div class="ql-dot" style="background:var(--blue-lt)"></div><span class="ql-text">Balancing Segments Article</span></a>
+      <a class="quick-link" href="#"><div class="ql-dot" style="background:var(--blue-lt)"></div><span class="ql-text">13 Use Cases — Full Guide</span></a>
+    </div>
+  </div>
+
+</aside>
+</div>
+
+<script>
+function toggleCard(id) {
+  const card = document.getElementById(id);
+  card.classList.toggle('open');
+}
+
+// Open first card by default
+document.getElementById('vc1').classList.add('open');
+
+// Checklist
+function toggleCheck(el) {
+  el.classList.toggle('checked');
+  updateChecklist();
+}
+
+function updateChecklist() {
+  const items = document.querySelectorAll('.check-item');
+  const checked = document.querySelectorAll('.check-item.checked').length;
+  const total = items.length;
+  const pct = Math.round((checked / total) * 100);
+  document.getElementById('clFill').style.width = pct + '%';
+  document.getElementById('clCount').textContent = checked + ' / ' + total;
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oracle Fusion Ledger Design Decision Tree</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Serif:ital@0;1&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0C0F14;
+  --surface: #131720;
+  --surface2: #1A2030;
+  --surface3: #212840;
+  --border: #2A3348;
+  --border-active: #3D5A8A;
+  --ink: #E8EDF5;
+  --ink-dim: #8A9AB8;
+  --ink-muted: #4A5878;
+  --oracle: #C0392B;
+  --oracle-lt: #E74C3C;
+  --gold: #D4A017;
+  --gold-lt: #F0C040;
+  --teal: #1ABC9C;
+  --teal-lt: #2EE8BE;
+  --blue: #2E5FA3;
+  --blue-lt: #4A85D4;
+  --warn: #E67E22;
+  --r: 8px;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  line-height: 1.6;
+}
+
+/* ── BACKGROUND TEXTURE ── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 10% 20%, #1A2E5022 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 90% 80%, #0D1F3A18 0%, transparent 60%),
+    repeating-linear-gradient(0deg, transparent, transparent 49px, #ffffff04 49px, #ffffff04 50px),
+    repeating-linear-gradient(90deg, transparent, transparent 49px, #ffffff03 49px, #ffffff03 50px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrap { position: relative; z-index: 1; max-width: 920px; margin: 0 auto; padding: 0 24px 80px; }
+
+/* ── HEADER ── */
+.header {
+  padding: 56px 0 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.header-eyebrow {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--oracle);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.header-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: var(--oracle);
+}
+.header h1 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(28px, 5vw, 44px);
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.12;
+  letter-spacing: -0.02em;
+  margin-bottom: 16px;
+}
+.header h1 span { color: var(--gold-lt); }
+.header-sub {
+  font-family: 'Instrument Serif', serif;
+  font-size: 18px;
+  font-style: italic;
+  color: var(--ink-dim);
+  max-width: 640px;
+  line-height: 1.65;
+  margin-bottom: 32px;
+}
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.badge {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 2px;
+  border: 1px solid;
+}
+.badge-oracle { border-color: var(--oracle); color: var(--oracle); }
+.badge-gold   { border-color: var(--gold);   color: var(--gold); }
+.badge-teal   { border-color: var(--teal);   color: var(--teal); }
+
+/* ── PROGRESS BAR ── */
+.progress-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 20px 24px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.progress-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+  width: 80px;
+}
+.progress-track {
+  flex: 1;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--oracle), var(--gold));
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(.4,0,.2,1);
+  width: 0%;
+}
+.progress-step {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--ink-dim);
+  flex-shrink: 0;
+  min-width: 48px;
+  text-align: right;
+}
+
+/* ── SCENARIO SELECTOR ── */
+.scenario-section {
+  margin-bottom: 32px;
+}
+.scenario-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  margin-bottom: 12px;
+  display: block;
+}
+.scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+.scenario-btn {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  padding: 12px 16px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s;
+  color: var(--ink-dim);
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+.scenario-btn:hover { border-color: var(--border-active); color: var(--ink); background: var(--surface2); }
+.scenario-btn.active { border-color: var(--gold); color: var(--gold-lt); background: #1A1A0A; }
+.scenario-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+/* ── TREE AREA ── */
+.tree-area { min-height: 400px; }
+
+/* ── NODE CARD ── */
+.node {
+  display: none;
+  animation: slideIn 0.35s cubic-bezier(.4,0,.2,1) both;
+}
+.node.active { display: block; }
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.node-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.node-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+.node-step {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  flex-shrink: 0;
+  padding-top: 3px;
+  width: 56px;
+}
+.node-header-text { flex: 1; }
+.node-question {
+  font-family: 'Syne', sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  margin-bottom: 6px;
+}
+.node-context {
+  font-family: 'Instrument Serif', serif;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--ink-dim);
+  line-height: 1.55;
+}
+
+.node-body { padding: 20px 24px; }
+
+/* ── ANSWER OPTIONS ── */
+.options-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.option-btn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 16px 20px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.18s;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+}
+.option-btn:hover {
+  border-color: var(--blue-lt);
+  background: var(--surface3);
+  transform: translateX(3px);
+}
+.option-btn.selected {
+  border-color: var(--teal);
+  background: #0A1F1A;
+}
+.option-indicator {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border-active);
+  flex-shrink: 0;
+  margin-top: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-dim);
+  transition: all 0.18s;
+}
+.option-btn:hover .option-indicator { border-color: var(--blue-lt); color: var(--blue-lt); }
+.option-btn.selected .option-indicator { background: var(--teal); border-color: var(--teal); color: #000; }
+
+.option-text { flex: 1; }
+.option-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 3px;
+  display: block;
+}
+.option-desc {
+  font-size: 13px;
+  color: var(--ink-dim);
+  line-height: 1.5;
+  display: block;
+}
+.option-trap {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--warn);
+  margin-top: 6px;
+  display: block;
+  display: none;
+}
+.option-btn.selected .option-trap { display: block; }
+
+/* ── CALLOUT WITHIN NODE ── */
+.node-callout {
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.node-callout.warn { background: #1A0F00; border: 1px solid var(--warn); }
+.node-callout.info { background: #0A1220; border: 1px solid var(--blue); }
+.node-callout.trap { background: #1A0A00; border: 1px solid var(--oracle); }
+.callout-icon { font-size: 15px; flex-shrink: 0; margin-top: 1px; }
+.callout-body { flex: 1; }
+.callout-title {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  display: block;
+}
+.warn .callout-title { color: var(--warn); }
+.info .callout-title { color: var(--blue-lt); }
+.trap .callout-title { color: var(--oracle-lt); }
+.callout-body p { font-size: 13px; color: var(--ink-dim); line-height: 1.6; margin: 0; }
+
+/* ── NAV BUTTONS ── */
+.node-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+.btn-back {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--ink-dim);
+  padding: 10px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 0.18s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-back:hover { border-color: var(--border-active); color: var(--ink); }
+.btn-back:disabled { opacity: 0.3; cursor: not-allowed; }
+
+.btn-next {
+  background: var(--blue);
+  border: none;
+  color: #fff;
+  padding: 10px 28px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 0.18s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.btn-next:hover { background: var(--blue-lt); }
+.btn-next:disabled { opacity: 0.35; cursor: not-allowed; }
+.btn-restart {
+  background: transparent;
+  border: 1px solid var(--teal);
+  color: var(--teal);
+  padding: 10px 24px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: all 0.18s;
+}
+.btn-restart:hover { background: var(--teal); color: #000; }
+
+/* ── BREADCRUMB TRAIL ── */
+.breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 20px;
+  min-height: 24px;
+}
+.crumb-item {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 3px 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-muted);
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.crumb-item .crumb-sep { color: var(--border-active); }
+.crumb-item.answered { border-color: var(--teal); color: var(--teal); }
+
+/* ── RESULT PANEL ── */
+.result-panel {
+  display: none;
+  animation: slideIn 0.4s ease both;
+}
+.result-panel.active { display: block; }
+
+.result-header {
+  background: linear-gradient(135deg, var(--surface), var(--surface2));
+  border: 1px solid var(--teal);
+  border-radius: var(--r);
+  padding: 28px 28px 24px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.result-header::before {
+  content: '';
+  position: absolute;
+  right: -30px; top: -30px;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #1ABC9C18, transparent 70%);
+}
+.result-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--teal);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.result-tag::before { content: '✓'; font-size: 12px; }
+.result-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--ink);
+  letter-spacing: -0.01em;
+  margin-bottom: 10px;
+}
+.result-summary {
+  font-family: 'Instrument Serif', serif;
+  font-size: 16px;
+  font-style: italic;
+  color: var(--ink-dim);
+  line-height: 1.65;
+}
+
+/* ── RESULT BLOCKS ── */
+.result-blocks { display: flex; flex-direction: column; gap: 14px; margin-bottom: 20px; }
+
+.result-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+.result-block-header {
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.result-block-num {
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+.num-primary { background: var(--oracle); color: #fff; }
+.num-secondary { background: var(--blue); color: #fff; }
+.num-reporting { background: var(--gold); color: #000; }
+.num-warning { background: var(--warn); color: #fff; }
+.num-tip { background: var(--teal); color: #000; }
+
+.result-block-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.result-block-body {
+  padding: 14px 20px;
+  font-size: 14px;
+  color: var(--ink-dim);
+  line-height: 1.65;
+}
+.result-block-body strong { color: var(--ink); font-weight: 700; }
+.result-block-body ul { padding-left: 18px; margin-top: 8px; }
+.result-block-body li { margin-bottom: 5px; }
+.result-block-body .mono {
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  background: var(--surface2);
+  padding: 2px 6px;
+  border-radius: 2px;
+  color: var(--blue-lt);
+}
+
+/* ── KPI STRIP ── */
+.kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+@media (max-width: 600px) { .kpi-strip { grid-template-columns: 1fr 1fr; } }
+.kpi-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 14px 16px;
+  text-align: center;
+}
+.kpi-val {
+  font-family: 'Syne', sans-serif;
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--gold-lt);
+  display: block;
+  line-height: 1;
+  margin-bottom: 5px;
+}
+.kpi-lbl {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  line-height: 1.4;
+}
+
+/* ── PITFALLS ── */
+.pitfalls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+@media (max-width: 600px) { .pitfalls-grid { grid-template-columns: 1fr; } }
+.pitfall-card {
+  background: #120808;
+  border: 1px solid #3A1A1A;
+  border-radius: 6px;
+  padding: 14px 16px;
+}
+.pitfall-card h4 {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--oracle-lt);
+  margin-bottom: 5px;
+}
+.pitfall-card p {
+  font-size: 12px;
+  color: var(--ink-muted);
+  line-height: 1.55;
+}
+
+/* ── SCENARIO TAG IN RESULT ── */
+.scenario-tag {
+  display: inline-block;
+  background: var(--surface2);
+  border: 1px solid var(--gold);
+  border-radius: 3px;
+  padding: 3px 10px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--gold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+/* ── USE CASE TAGS ── */
+.uc-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.uc-tag {
+  background: var(--surface2);
+  border: 1px solid var(--border-active);
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--blue-lt);
+  letter-spacing: 0.05em;
+}
+
+/* ── DECISION LOG ── */
+.decision-log {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.decision-log-header {
+  padding: 12px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.decision-log-header span {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+.decision-log-body { padding: 0; }
+.log-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0;
+}
+.log-row:last-child { border-bottom: none; }
+.log-q {
+  padding: 10px 16px;
+  background: var(--surface2);
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--ink-muted);
+  letter-spacing: 0.06em;
+  width: 160px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border);
+  line-height: 1.5;
+}
+.log-a {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--ink);
+  line-height: 1.5;
+  flex: 1;
+}
+.log-a strong { color: var(--teal); font-family: 'Syne', sans-serif; font-size: 12px; font-weight: 700; }
+
+/* ── LINK ── */
+.result-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--blue-lt);
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-decoration: none;
+  border-bottom: 1px solid var(--border-active);
+  padding-bottom: 2px;
+  transition: color 0.18s, border-color 0.18s;
+}
+.result-link:hover { color: var(--teal); border-color: var(--teal); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 600px) {
+  .header { padding: 32px 0 32px; }
+  .node-question { font-size: 16px; }
+  .node-header { flex-direction: column; gap: 8px; }
+  .node-step { width: auto; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-eyebrow">Oracle Fusion Cloud ERP · General Ledger Architecture</div>
+    <h1>Ledger Design<br><span>Decision Tree</span></h1>
+    <p class="header-sub">Answer four questions about your organisation. Get a specific, actionable ledger architecture recommendation — primary structure, secondary ledgers, reporting currency ledgers, and conversion levels.</p>
+    <div class="header-meta">
+      <span class="badge badge-oracle">Oracle Fusion</span>
+      <span class="badge badge-gold">All Scenarios</span>
+      <span class="badge badge-teal">4 Decision Points</span>
+    </div>
+  </header>
+
+  <!-- SCENARIO SELECTOR -->
+  <div class="scenario-section">
+    <span class="scenario-label">Start by selecting your situation</span>
+    <div class="scenario-grid">
+      <button class="scenario-btn" onclick="setScenario('single')" id="sc-single">
+        <span class="scenario-icon">🏢</span>
+        <span>Single country,<br>single legal entity</span>
+      </button>
+      <button class="scenario-btn" onclick="setScenario('multi')" id="sc-multi">
+        <span class="scenario-icon">🌍</span>
+        <span>Multi-country,<br>multiple legal entities</span>
+      </button>
+      <button class="scenario-btn" onclick="setScenario('r12')" id="sc-r12">
+        <span class="scenario-icon">🔄</span>
+        <span>Migrating<br>from R12</span>
+      </button>
+      <button class="scenario-btn" onclick="setScenario('erp')" id="sc-erp">
+        <span class="scenario-icon">↗</span>
+        <span>Migrating from<br>non-Oracle ERP</span>
+      </button>
+      <button class="scenario-btn" onclick="setScenario('postgo')" id="sc-postgo">
+        <span class="scenario-icon">⚡</span>
+        <span>Post-go-live —<br>adding a secondary ledger</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-bar" id="progressBar" style="opacity:0.4">
+    <span class="progress-label">Progress</span>
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <span class="progress-step" id="progressStep">0 / 4</span>
+  </div>
+
+  <!-- BREADCRUMBS -->
+  <div class="breadcrumb" id="breadcrumb"></div>
+
+  <!-- TREE AREA -->
+  <div class="tree-area" id="treeArea">
+    <div style="text-align:center; padding: 80px 0; color: var(--ink-muted); font-family: 'Instrument Serif', serif; font-style:italic; font-size:18px;">
+      Select your situation above to begin.
+    </div>
+  </div>
+
+  <!-- RESULT PANEL -->
+  <div class="result-panel" id="resultPanel"></div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════════════
+let state = {
+  scenario: null,
+  step: 0,
+  answers: {},   // stepIndex -> { label, value, optionLabel }
+  history: []    // array of step indices for back navigation
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// QUESTION TREE
+// Each step: { id, stepLabel, question, context, callout?, options: [{label, desc, trap?, next}] }
+// next can be a step id string or 'result'
+// ═══════════════════════════════════════════════════════════════════════════
+
+const STEPS = {
+
+  // ── STEP 1: Shared vs separate primary ──────────────────────────────────
+  'q1': {
+    id: 'q1',
+    stepLabel: 'Step 1 of 4 · Primary Ledger Structure',
+    question: 'Do your legal entities share the same country, functional currency, Chart of Accounts, and accounting calendar?',
+    context: 'This determines whether multiple legal entities can share a single primary ledger or each requires its own. Sharing is possible but requires all four conditions to be met simultaneously.',
+    callout: {
+      type: 'info',
+      title: 'Why This Matters',
+      body: 'A shared primary ledger reduces configuration overhead significantly — one period close, one CoA to maintain, one SLAM. But the four conditions are all hard requirements. One mismatch means separate ledgers, no exceptions.'
+    },
+    options: [
+      {
+        label: 'Yes — all four conditions are met',
+        desc: 'Same country, same functional currency, same CoA, same calendar across all entities.',
+        value: 'shared',
+        next: 'q1b'
+      },
+      {
+        label: 'No — at least one condition differs',
+        desc: 'Entities are in different countries, or have different currencies, CoA structures, or financial calendars.',
+        value: 'separate',
+        next: 'q2'
+      },
+      {
+        label: 'Mixed — some entities can share, others cannot',
+        desc: 'A subset of entities meet all four conditions; others differ on at least one dimension.',
+        value: 'mixed',
+        next: 'q1c'
+      }
+    ]
+  },
+
+  'q1b': {
+    id: 'q1b',
+    stepLabel: 'Step 1 of 4 · Shared Ledger — Additional Check',
+    question: 'Do any of the sharing entities have materially different statutory filing requirements or SLA method needs?',
+    context: 'Even when the four conditions are met, a shared ledger may not be appropriate if one entity requires a fundamentally different Subledger Accounting Method — for example, if one entity is hyperinflationary and others are not, or if statutory rules in practice require a separately isolated ledger for audit purposes.',
+    callout: {
+      type: 'trap',
+      title: 'Common Trap',
+      body: 'Teams confirm the four technical conditions and assume a shared ledger is fine — then discover at UAT that one entity\'s statutory requirements mean the SLAM cannot be shared without complex conditional rules. Resolve this in design, not in configuration.'
+    },
+    options: [
+      {
+        label: 'No — statutory requirements are compatible',
+        desc: 'Entities can use the same SLAM structure. Differences can be handled through SLA rule conditions (Legal Entity, Business Unit).',
+        value: 'compatible',
+        next: 'q2'
+      },
+      {
+        label: 'Yes — one entity has fundamentally different statutory needs',
+        desc: 'e.g., hyperinflationary economy, completely different local GAAP treatment, or isolated audit requirement.',
+        value: 'incompatible',
+        trap: 'Recommendation will be separate primary ledgers despite conditions appearing met.',
+        next: 'q2'
+      }
+    ]
+  },
+
+  'q1c': {
+    id: 'q1c',
+    stepLabel: 'Step 1 of 4 · Mixed Structure',
+    question: 'For the entities that cannot share — what is the primary reason they differ?',
+    context: 'Understanding the root cause of the separation helps determine whether the non-sharing entities need their own secondary ledger design or whether a simpler reporting currency ledger approach suffices.',
+    options: [
+      {
+        label: 'Different functional currency',
+        desc: 'One or more entities transact in a different currency.',
+        value: 'currency',
+        next: 'q2'
+      },
+      {
+        label: 'Different country / statutory regime',
+        desc: 'Entities are in different jurisdictions with different local GAAP or regulatory requirements.',
+        value: 'country',
+        next: 'q2'
+      },
+      {
+        label: 'Different Chart of Accounts',
+        desc: 'Business lines or divisions use structurally different CoA segment structures.',
+        value: 'coa',
+        next: 'q2'
+      }
+    ]
+  },
+
+  // ── STEP 2: Secondary Ledger vs Reporting Currency ───────────────────────
+  'q2': {
+    id: 'q2',
+    stepLabel: 'Step 2 of 4 · Parallel Accounting Type',
+    question: 'Does your parallel reporting requirement involve different accounting rules — or just a different currency?',
+    context: 'This is the most commonly confused decision in ledger design. The answer determines whether you need a Secondary Ledger (different accounting) or a Reporting Currency Ledger (same accounting, translated currency). Getting this wrong means building a secondary ledger that adds no value — or a reporting currency ledger that cannot handle the accounting differences you actually need.',
+    callout: {
+      type: 'info',
+      title: 'The Single Test',
+      body: 'Ask: for the same transaction, do you need different journal entries? If yes → Secondary Ledger. If you only need the same entries expressed in another currency → Reporting Currency Ledger.'
+    },
+    options: [
+      {
+        label: 'Different accounting rules for the same transaction',
+        desc: 'e.g., IFRS vs local GAAP, standard vs actual cost, IAS 16 component vs pooled depreciation, IFRS 16 vs operating lease.',
+        value: 'different_accounting',
+        next: 'q3'
+      },
+      {
+        label: 'Same accounting, just translated into another currency',
+        desc: 'e.g., USD group reporting alongside EUR functional currency. Journal entries are identical — only the currency expression differs.',
+        value: 'currency_only',
+        next: 'q2b'
+      },
+      {
+        label: 'Both — different accounting AND a different currency',
+        desc: 'e.g., IFRS in EUR (primary), local GAAP in EUR (secondary), plus USD for parent group reporting.',
+        value: 'both',
+        next: 'q3'
+      },
+      {
+        label: 'Neither — no parallel reporting requirement at this time',
+        desc: 'Single accounting standard, single currency. No secondary or reporting currency ledger needed.',
+        value: 'none',
+        next: 'q4_skip'
+      }
+    ]
+  },
+
+  'q2b': {
+    id: 'q2b',
+    stepLabel: 'Step 2 of 4 · Reporting Currency Ledger — Granularity',
+    question: 'At what level does your group need the currency translation to occur?',
+    context: 'Reporting Currency Ledgers come in three sub-types that differ in how granular the translation is. The choice affects the audit trail depth and the ability to reconcile at transaction level.',
+    callout: {
+      type: 'warn',
+      title: 'Note on Balance-Level Translation',
+      body: 'Balance-level is the simplest to configure but provides no transaction-level audit trail in the translated currency. If your group auditors or regulators require transaction traceability in the reporting currency, use Subledger or Journal level.'
+    },
+    options: [
+      {
+        label: 'Subledger-level translation',
+        desc: 'Most granular. Each subledger transaction is individually translated. Full audit trail in the reporting currency.',
+        value: 'sl',
+        next: 'q4_skip'
+      },
+      {
+        label: 'Journal-level translation',
+        desc: 'Translation at the GL journal entry level. Good balance between granularity and configuration complexity.',
+        value: 'jl',
+        next: 'q4_skip'
+      },
+      {
+        label: 'Balance-level translation',
+        desc: 'Period-end balances translated only. Simplest — no transaction-level detail in reporting currency.',
+        value: 'bl',
+        next: 'q4_skip'
+      }
+    ]
+  },
+
+  // ── STEP 3: Conversion Level ─────────────────────────────────────────────
+  'q3': {
+    id: 'q3',
+    stepLabel: 'Step 3 of 4 · Secondary Ledger Conversion Level',
+    question: 'Where does the accounting diverge between your primary and secondary ledger?',
+    context: 'The conversion level determines at what point in the accounting flow the secondary ledger begins to differ from the primary. This is the most consequential configuration decision for secondary ledger performance. Choosing a level that is too high (Balance) when Subledger is required will result in a secondary ledger that is either useless or requires extensive manual intervention.',
+    callout: {
+      type: 'trap',
+      title: 'Most Common Implementation Error',
+      body: 'Teams choose Balance or Journal level because it is simpler to configure, then discover at UAT that the secondary ledger produces identical entries to the primary. Changing conversion level post-configuration requires rebuilding SLA rules. Always validate against your specific use cases before finalising.'
+    },
+    options: [
+      {
+        label: 'At the transaction level — accounting rules differ per transaction',
+        desc: 'Different account derivation, different amounts, or different event handling for the same subledger transaction (AP invoice, FA depreciation, AR receipt, Cost distribution).',
+        value: 'subledger',
+        trap: '→ Subledger conversion level required. SLA Journal Line Rules and ADRs must be configured.',
+        next: 'q4'
+      },
+      {
+        label: 'At the GL journal level — subledger entries are the same, GL adjustments differ',
+        desc: 'Subledger creates identical entries in both ledgers, but GL-level manual journals or allocations differ.',
+        value: 'journal',
+        trap: '→ Journal conversion level. Simpler SLA setup but less granular audit trail.',
+        next: 'q4'
+      },
+      {
+        label: 'Only at period-end balance level — same entries, balance-level adjustments',
+        desc: 'Secondary ledger needs the same transaction entries as primary, with only period-end balance adjustments.',
+        value: 'balance',
+        trap: '→ Balance conversion level. Verify this genuinely meets your requirement — it provides no transaction-level difference.',
+        next: 'q4'
+      },
+      {
+        label: 'Manual journals only — secondary is a staging or adjustment ledger',
+        desc: 'No automatic transfer from primary. All entries to secondary are manual — e.g., pre-consolidation adjustments, goodwill amortisation, management overlay.',
+        value: 'adjustment',
+        trap: '→ Adjustment Only conversion level. Used for pre-consolidation staging (Use Case 12).',
+        next: 'q4'
+      }
+    ]
+  },
+
+  // ── STEP 4: How many secondary ledgers ──────────────────────────────────
+  'q4': {
+    id: 'q4',
+    stepLabel: 'Step 4 of 4 · Number of Secondary Ledgers',
+    question: 'How many distinct accounting bases does this entity need to maintain simultaneously?',
+    context: 'The number of secondary ledgers is determined by the number of genuinely different accounting standards or bases — not by the number of use cases. Multiple use cases (e.g., AP prepayment treatment, lease accounting, revenue recognition) can often be handled within a single secondary ledger through a SLAM that covers all of them. You only need separate secondary ledgers when the CoA, conversion level, or accounting basis itself differs.',
+    callout: {
+      type: 'warn',
+      title: 'Design Principle',
+      body: 'Start with the minimum number of secondary ledgers and look for reasons to split — not the other way around. More than three secondary ledgers per primary is a design smell. Validate whether any proposed additional secondary ledgers could instead be a Reporting Currency Ledger attached to an existing secondary.'
+    },
+    options: [
+      {
+        label: 'One — local statutory GAAP only',
+        desc: 'Primary is IFRS/US GAAP, secondary is local GAAP. All statutory differences handled within one secondary ledger and SLAM.',
+        value: '1_stat',
+        next: 'result'
+      },
+      {
+        label: 'Two — local statutory + tax basis',
+        desc: 'Primary is IFRS/US GAAP, secondary 1 is local GAAP, secondary 2 is tax basis (separate CoA or different conversion level needed for tax).',
+        value: '2_stat_tax',
+        next: 'result'
+      },
+      {
+        label: 'Two — local statutory + management/pre-consolidation',
+        desc: 'Primary, local GAAP secondary (Subledger level), plus an adjustment-only secondary for pre-consolidation entries or management overlays.',
+        value: '2_stat_adj',
+        next: 'result'
+      },
+      {
+        label: 'Three or more — complex multi-standard requirement',
+        desc: 'e.g., IFRS primary + local GAAP secondary + tax secondary + pre-consolidation adjustment ledger.',
+        value: '3_plus',
+        next: 'result'
+      }
+    ]
+  },
+
+  'q4_skip': {
+    id: 'q4_skip',
+    stepLabel: 'Step 4 of 4 · Secondary Ledger Count',
+    question: 'Does this entity also need a Secondary Ledger (different accounting rules), in addition to the Reporting Currency Ledger?',
+    context: 'A Reporting Currency Ledger only handles currency translation — it does not address accounting policy differences. If the entity also has statutory or tax requirements that need different accounting treatment, a secondary ledger is required in addition.',
+    options: [
+      {
+        label: 'No — Reporting Currency Ledger is sufficient',
+        desc: 'The entity reports under one accounting standard only. The Reporting Currency Ledger provides the group currency view.',
+        value: 'rcl_only',
+        next: 'result'
+      },
+      {
+        label: 'Yes — also need a Secondary Ledger for different accounting',
+        desc: 'The entity has both a currency reporting need (RCL) and a statutory accounting difference need (secondary ledger).',
+        value: 'rcl_and_secondary',
+        next: 'q3'
+      }
+    ]
+  }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// RESULT GENERATOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+function getScenarioLabel() {
+  const labels = {
+    single: 'Single Country · Single Legal Entity',
+    multi:  'Multi-Country · Multiple Legal Entities',
+    r12:    'Migration from Oracle R12',
+    erp:    'Migration from Non-Oracle ERP',
+    postgo: 'Post-Go-Live · Adding Secondary Ledger'
+  };
+  return labels[state.scenario] || '';
+}
+
+function buildResult() {
+  const a = state.answers;
+  const scenario = state.scenario;
+  let blocks = [];
+  let pitfalls = [];
+  let kpis = [];
+  let title = '';
+  let summary = '';
+  let decisionLog = [];
+
+  // Build decision log from answers
+  const stepLabels = {
+    q1: 'Primary ledger structure', q1b: 'Shared ledger check', q1c: 'Separation reason',
+    q2: 'Parallel accounting type', q2b: 'RCL granularity',
+    q3: 'Conversion level', q4: 'Secondary ledger count', q4_skip: 'Additional secondary?'
+  };
+  for (const [sid, ans] of Object.entries(a)) {
+    if (stepLabels[sid]) {
+      decisionLog.push({ q: stepLabels[sid], a: ans.optionLabel });
+    }
+  }
+
+  // ── Determine primary structure
+  const q1val = a.q1?.value;
+  const q1bval = a.q1b?.value;
+  const q1cval = a.q1c?.value;
+  const q2val  = a.q2?.value;
+  const q2bval = a.q2b?.value;
+  const q3val  = a.q3?.value;
+  const q4val  = a.q4?.value;
+  const q4sval = a.q4_skip?.value;
+
+  // Primary ledger block
+  let primaryDesc = '';
+  if (q1val === 'shared' && q1bval === 'compatible') {
+    primaryDesc = '<strong>Shared Primary Ledger</strong> — your entities meet all four conditions (country, currency, CoA, calendar) and have compatible SLAM requirements. A single primary ledger is recommended. Distinguish legal entities using separate <span class="mono">Primary Balancing Segment</span> values within the shared ledger.';
+  } else if (q1val === 'shared' && q1bval === 'incompatible') {
+    primaryDesc = '<strong>Separate Primary Ledgers required</strong> — despite meeting the four technical conditions, one entity\'s statutory requirements are incompatible with a shared SLAM. Configure separate primary ledgers. This adds period-close overhead but avoids a SLAM that is conditionally complex to the point of being unmaintainable.';
+  } else if (q1val === 'separate') {
+    primaryDesc = '<strong>Separate Primary Ledger per entity</strong> — entities differ on at least one of the four conditions. Each requires its own primary ledger. Use a <span class="mono">Ledger Set</span> to group them for multi-ledger reporting, security, and period management.';
+  } else if (q1val === 'mixed') {
+    primaryDesc = '<strong>Mixed structure</strong> — entities that share all four conditions can share a primary ledger (distinguished by Primary Balancing Segment values). Entities that differ require separate primary ledgers. Use a Ledger Set to manage the group as a whole.';
+    if (q1cval === 'currency') primaryDesc += ' The currency difference is a hard constraint — currency-divergent entities must have separate primaries regardless of other conditions.';
+  } else {
+    primaryDesc = '<strong>Primary Ledger</strong> — configure one primary ledger per legal entity grouping that shares all four conditions (country, currency, CoA, calendar).';
+  }
+
+  blocks.push({
+    num: '1', numClass: 'num-primary', title: 'Primary Ledger Recommendation',
+    body: primaryDesc
+  });
+
+  // Reporting Currency Ledger block
+  if (q2val === 'currency_only' || q2val === 'both' || q4sval === 'rcl_and_secondary') {
+    let rclDesc = '';
+    const level = q2bval === 'sl' ? 'Subledger-level' : q2bval === 'jl' ? 'Journal-level' : q2bval === 'bl' ? 'Balance-level' : 'appropriate';
+    if (q2val === 'currency_only' || q4sval?.includes('rcl')) {
+      rclDesc = `<strong>Reporting Currency Ledger required</strong> at <span class="mono">${level} translation</span>. This ledger inherits the same Chart of Accounts and SLAM as its parent. No separate accounting rules needed — only currency translation. Attach it to the primary ledger (or to a secondary ledger if the secondary also needs a group currency view).`;
+    } else if (q2val === 'both') {
+      rclDesc = `<strong>Reporting Currency Ledger required</strong> in addition to a Secondary Ledger. The secondary ledger handles the accounting policy difference; the Reporting Currency Ledger provides the translated group currency view. Both attach to the primary ledger. Configure the RCL at <span class="mono">${level} translation</span>.`;
+    }
+    blocks.push({
+      num: '2', numClass: 'num-reporting', title: 'Reporting Currency Ledger',
+      body: rclDesc
+    });
+  }
+
+  // Secondary Ledger block
+  if (q2val === 'different_accounting' || q2val === 'both' || q4sval === 'rcl_and_secondary') {
+    let convLevel = '';
+    let convDesc = '';
+    if (q3val === 'subledger') {
+      convLevel = 'Subledger';
+      convDesc = 'SLA Journal Line Rules and Account Derivation Rules must be configured for every accounting difference. This is the most powerful level — it enables all 13 secondary ledger use cases described in the configuration guide.';
+    } else if (q3val === 'journal') {
+      convLevel = 'Journal';
+      convDesc = 'Subledger entries will be identical between primary and secondary. GL-level manual or allocation journals drive differences. Less common for statutory scenarios.';
+    } else if (q3val === 'balance') {
+      convLevel = 'Balance';
+      convDesc = 'Period-end balances only. No transaction-level audit trail in the secondary. Verify this meets your statutory and audit requirements before proceeding — it often does not.';
+    } else if (q3val === 'adjustment') {
+      convLevel = 'Adjustment Only';
+      convDesc = 'No automatic transfer from primary. All entries are manual. Correct for pre-consolidation staging, goodwill amortisation, and management overlay use cases.';
+    }
+
+    let numSec = '';
+    let numSecDesc = '';
+    if (q4val === '1_stat') {
+      numSec = '1 Secondary Ledger';
+      numSecDesc = 'A single Local GAAP secondary ledger with one SLAM covering all statutory use cases. Handle multiple use cases (provisions, lease accounting, revenue timing, AP/AR) through JLR conditions within the same SLAM.';
+    } else if (q4val === '2_stat_tax') {
+      numSec = '2 Secondary Ledgers';
+      numSecDesc = 'Secondary 1: Local GAAP statutory (Subledger level). Secondary 2: Tax basis — requires separate CoA or different conversion level. Each has its own SLAM.';
+    } else if (q4val === '2_stat_adj') {
+      numSec = '2 Secondary Ledgers';
+      numSecDesc = 'Secondary 1: Local GAAP statutory (Subledger level) — handles all operational accounting differences. Secondary 2: Adjustment Only — pre-consolidation entries, goodwill amortisation, PPA step-ups. Feeds FCCS/HFM.';
+    } else if (q4val === '3_plus') {
+      numSec = '3+ Secondary Ledgers';
+      numSecDesc = 'Complex multi-standard requirement. Ensure each secondary ledger has a genuinely different accounting basis — not just different use cases that could share a SLAM. Consider whether any can be Reporting Currency Ledgers instead.';
+    } else if (q4sval === 'rcl_and_secondary') {
+      numSec = '1 Secondary Ledger + 1 Reporting Currency Ledger';
+      numSecDesc = 'Secondary ledger handles the accounting policy difference. Reporting Currency Ledger provides the group currency view. Both configured independently.';
+    }
+
+    let secBody = `<strong>${numSec}</strong> — Conversion Level: <span class="mono">${convLevel}</span>.<br><br>${convDesc}`;
+    if (numSecDesc) secBody += `<br><br><strong>Structure:</strong> ${numSecDesc}`;
+
+    // Add use case hints
+    let ucHints = [];
+    if (scenario === 'single') ucHints = ['Statutory Reporting', 'Fixed Assets (IAS 16)', 'AP/AR', 'Lease Accounting (IFRS 16)'];
+    else if (scenario === 'multi') ucHints = ['Statutory Reporting', 'Intercompany', 'Tax/Deferred Tax', 'Pre-Consolidation Adjustments'];
+    else if (scenario === 'r12') ucHints = ['Statutory Reporting', 'Fixed Assets', 'Cost Accounting', 'Intercompany'];
+    else if (scenario === 'erp') ucHints = ['Statutory Reporting', 'Lease Accounting', 'Tax/Deferred Tax', 'AP/AR'];
+    else if (scenario === 'postgo') ucHints = ['Varies by gap being addressed'];
+
+    if (q3val === 'subledger') {
+      secBody += `<br><br><strong>Likely use cases for your SLAM:</strong>`;
+      secBody += `<div class="uc-tags">${ucHints.map(u => `<span class="uc-tag">${u}</span>`).join('')}</div>`;
+    }
+
+    blocks.push({
+      num: q2val === 'both' || q4sval === 'rcl_and_secondary' ? '3' : '2',
+      numClass: 'num-secondary', title: 'Secondary Ledger Recommendation',
+      body: secBody
+    });
+  }
+
+  // No parallel reporting block
+  if (q2val === 'none') {
+    blocks.push({
+      num: '2', numClass: 'num-tip', title: 'No Secondary or Reporting Currency Ledger Required',
+      body: 'Your primary ledger is sufficient for current reporting requirements. If requirements change — e.g., a statutory audit requirement emerges, or the parent requires group USD reporting — a Secondary Ledger or Reporting Currency Ledger can be added post-go-live. Note that historical data in the secondary will be limited to the activation date forward.'
+    });
+  }
+
+  // Scenario-specific block
+  let scenarioNote = '';
+  if (scenario === 'r12') {
+    scenarioNote = `<strong>R12 Migration Consideration:</strong> Audit your existing Operating Unit structure before replicating it in Fusion. In R12, many organisations created one OU per entity, which in Fusion should not automatically translate to one primary ledger per entity. Consolidate where the four conditions are met. Also review which R12 manual workarounds (shadow books, manual journals) can be replaced by properly configured secondary ledgers — the design phase is the time to retire them, not post-go-live.`;
+  } else if (scenario === 'erp') {
+    scenarioNote = `<strong>Non-Oracle ERP Migration:</strong> Design your ledger structure from scratch without inheriting the constraints of your previous ERP. The dual-book workarounds from SAP parallel ledgers, D365 reporting currencies, or NetSuite multi-book should be assessed against what Fusion secondary ledgers can do natively. Treat secondary ledger design as a first-class deliverable — not a post-go-live enhancement.`;
+  } else if (scenario === 'postgo') {
+    scenarioNote = `<strong>Post-Go-Live Addition:</strong> A secondary ledger can be added after go-live. The configuration steps are identical to initial setup. The critical constraint is <strong>historical data</strong> — the secondary ledger will only have accounting from its activation date forward. Historical balances must be manually migrated via opening balance journals. For statutory purposes, this typically means the secondary ledger operates with a gap in the first one to two years, meaning some manual workarounds continue in parallel. If statutory comparatives are required, plan the historical data migration carefully before activation.`;
+  }
+
+  if (scenarioNote) {
+    blocks.push({
+      num: '!', numClass: 'num-warning', title: 'Scenario-Specific Note',
+      body: scenarioNote
+    });
+  }
+
+  // Pitfalls based on answers
+  if (q3val === 'subledger' || q2val === 'different_accounting' || q2val === 'both') {
+    pitfalls.push({ h: 'No SLAM Assigned', p: 'Every secondary ledger must have an explicitly assigned Subledger Accounting Method. A secondary with no SLAM defaults to Standard Accrual and produces entries identical to the primary.' });
+    pitfalls.push({ h: 'Incomplete CoA Mapping', p: 'Unmapped account combinations post to suspense. Run Create Accounting in Draft mode for a full period before go-live. 100% mapping coverage is a go-live entry criterion.' });
+  }
+  pitfalls.push({ h: 'Secondary Period Not Opened', p: 'If Create Accounting runs before the secondary period is open, entries go to the primary only. Automate period open as a system dependency, not a checklist item.' });
+  if (q1val === 'shared') {
+    pitfalls.push({ h: 'OU-to-Ledger Conflation', p: 'In Fusion, Operating Units are operational — not accounting. Separate OUs do not require separate ledgers. Distinguish entities through Primary Balancing Segment values within the shared ledger.' });
+  }
+  if (q3val === 'balance' || q3val === 'journal') {
+    pitfalls.push({ h: 'Conversion Level Too High', p: 'Balance or Journal level will not produce transaction-level accounting differences. If your statutory use cases require different SLA rules per transaction, Subledger level is required.' });
+  }
+  if (scenario === 'postgo') {
+    pitfalls.push({ h: 'Historical Data Gap', p: 'The secondary ledger only holds data from activation forward. Plan the historical balance migration explicitly — it does not happen automatically.' });
+  }
+
+  // KPIs
+  if (q3val === 'subledger') {
+    kpis = [
+      { val: '~100%', lbl: 'Manual bridge journals eliminated' },
+      { val: '−40%',  lbl: 'Statutory close cycle time reduction' },
+      { val: '<0.1%', lbl: 'Target unexplained recon variance' }
+    ];
+  } else if (q2val === 'currency_only' || q2bval) {
+    kpis = [
+      { val: '3',    lbl: 'RCL translation levels available' },
+      { val: '−30%', lbl: 'Group reporting preparation time' },
+      { val: '100%', lbl: 'Transaction traceability (SL level)' }
+    ];
+  } else {
+    kpis = [
+      { val: '1',    lbl: 'Primary ledger required' },
+      { val: '−25%', lbl: 'Period close time vs multi-ledger' },
+      { val: '100%', lbl: 'Design flexibility retained' }
+    ];
+  }
+
+  // Title and summary
+  if (q2val === 'none') {
+    title = 'Primary Ledger Only';
+    summary = 'Your current requirements are satisfied by a correctly configured primary ledger. No secondary or reporting currency ledger is needed at this stage.';
+  } else if (q2val === 'currency_only' && q4sval !== 'rcl_and_secondary') {
+    title = 'Primary + Reporting Currency Ledger';
+    summary = 'Your requirement is currency translation, not a different accounting basis. A Reporting Currency Ledger is the correct and sufficient solution. A Secondary Ledger would add configuration overhead for no additional value.';
+  } else if (q3val === 'adjustment') {
+    title = 'Primary + Adjustment-Only Secondary Ledger';
+    summary = 'Your secondary ledger is a staging layer for manual adjustments — pre-consolidation entries, goodwill amortisation, or management overlays. No automatic transfer from primary occurs.';
+  } else if (q4val === '2_stat_tax' || q4val === '2_stat_adj') {
+    title = 'Primary + Two Secondary Ledgers';
+    summary = 'Your organisation requires two distinct accounting representations beyond the primary. Each secondary ledger will have its own SLAM, its own period management, and its own reconciliation process.';
+  } else if (q4val === '3_plus') {
+    title = 'Primary + Three or More Secondary Ledgers';
+    summary = 'Complex multi-standard requirement. Validate that each secondary ledger has a genuinely distinct accounting basis before committing to this structure. Consider whether any can be consolidated into a single SLAM.';
+  } else {
+    title = 'Primary + Secondary Ledger';
+    summary = 'Your requirement is a parallel accounting representation under different rules. A Secondary Ledger at the appropriate conversion level is the correct solution.';
+  }
+
+  // Render
+  const panel = document.getElementById('resultPanel');
+  panel.innerHTML = `
+    <div class="result-header">
+      <div class="result-tag">Recommendation Ready</div>
+      <div class="scenario-tag">${getScenarioLabel()}</div>
+      <div class="result-title">${title}</div>
+      <div class="result-summary">${summary}</div>
+    </div>
+
+    <div class="decision-log">
+      <div class="decision-log-header">
+        <span>Your Decision Path</span>
+      </div>
+      <div class="decision-log-body">
+        ${decisionLog.map(d => `<div class="log-row"><div class="log-q">${d.q}</div><div class="log-a"><strong>${d.a}</strong></div></div>`).join('')}
+      </div>
+    </div>
+
+    <div class="kpi-strip">
+      ${kpis.map(k => `<div class="kpi-item"><span class="kpi-val">${k.val}</span><span class="kpi-lbl">${k.lbl}</span></div>`).join('')}
+    </div>
+
+    <div class="result-blocks">
+      ${blocks.map(b => `
+        <div class="result-block">
+          <div class="result-block-header">
+            <div class="result-block-num ${b.numClass}">${b.num}</div>
+            <div class="result-block-title">${b.title}</div>
+          </div>
+          <div class="result-block-body">${b.body}</div>
+        </div>
+      `).join('')}
+    </div>
+
+    ${pitfalls.length ? `
+    <div class="pitfalls-grid">
+      ${pitfalls.slice(0, 6).map(p => `
+        <div class="pitfall-card">
+          <h4>⚠ ${p.h}</h4>
+          <p>${p.p}</p>
+        </div>
+      `).join('')}
+    </div>` : ''}
+
+    <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap; padding-top:8px;">
+      <button class="btn-restart" onclick="restart()">↺ Start Over</button>
+      <a class="result-link" href="#">
+        → Full Configuration Guide (13 Use Cases)
+      </a>
+      <a class="result-link" href="https://simplitconsulting.com/why-one-balancing-segment-was-never-enough/">
+        → Balancing Segments Article
+      </a>
+    </div>
+  `;
+
+  panel.classList.add('active');
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+function setScenario(s) {
+  state.scenario = s;
+  document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sc-' + s).classList.add('active');
+  document.getElementById('progressBar').style.opacity = '1';
+  restart(true);
+  goToStep('q1');
+}
+
+function goToStep(stepId) {
+  // Hide all nodes
+  document.querySelectorAll('.node').forEach(n => n.classList.remove('active'));
+  document.getElementById('resultPanel').classList.remove('active');
+  document.getElementById('resultPanel').innerHTML = '';
+
+  const step = STEPS[stepId];
+  const treeArea = document.getElementById('treeArea');
+
+  // Check if node exists, if not create it
+  let nodeEl = document.getElementById('node-' + stepId);
+  if (!nodeEl) {
+    nodeEl = createNodeEl(step);
+    treeArea.appendChild(nodeEl);
+  }
+
+  nodeEl.classList.add('active');
+  state.step = stepId;
+  updateProgress();
+  updateBreadcrumb();
+  nodeEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function createNodeEl(step) {
+  const div = document.createElement('div');
+  div.className = 'node';
+  div.id = 'node-' + step.id;
+
+  const calloutHtml = step.callout ? `
+    <div class="node-callout ${step.callout.type}">
+      <span class="callout-icon">${step.callout.type === 'info' ? 'ℹ' : step.callout.type === 'trap' ? '⚠' : '⚡'}</span>
+      <div class="callout-body">
+        <span class="callout-title">${step.callout.title}</span>
+        <p>${step.callout.body}</p>
+      </div>
+    </div>` : '';
+
+  const optionsHtml = step.options.map((o, i) => `
+    <button class="option-btn" onclick="selectOption('${step.id}', ${i})" id="opt-${step.id}-${i}">
+      <div class="option-indicator">${String.fromCharCode(65 + i)}</div>
+      <div class="option-text">
+        <span class="option-label">${o.label}</span>
+        <span class="option-desc">${o.desc}</span>
+        ${o.trap ? `<span class="option-trap">${o.trap}</span>` : ''}
+      </div>
+    </button>
+  `).join('');
+
+  const isFirst = step.id === 'q1';
+
+  div.innerHTML = `
+    <div class="node-card">
+      <div class="node-header">
+        <span class="node-step">${step.stepLabel}</span>
+        <div class="node-header-text">
+          <div class="node-question">${step.question}</div>
+          <div class="node-context">${step.context}</div>
+        </div>
+      </div>
+      <div class="node-body">
+        ${calloutHtml}
+        <div class="options-grid">${optionsHtml}</div>
+        <div class="node-nav">
+          <button class="btn-back" onclick="goBack()" ${isFirst ? 'disabled' : ''}>← Back</button>
+          <button class="btn-next" id="next-${step.id}" onclick="goNext('${step.id}')" disabled>Next →</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return div;
+}
+
+function selectOption(stepId, optIdx) {
+  const step = STEPS[stepId];
+  const opt = step.options[optIdx];
+
+  // Update UI
+  document.querySelectorAll(`[id^="opt-${stepId}-"]`).forEach((b, i) => {
+    b.classList.toggle('selected', i === optIdx);
+  });
+
+  // Store answer
+  state.answers[stepId] = {
+    optionIndex: optIdx,
+    value: opt.value,
+    optionLabel: opt.label,
+    next: opt.next
+  };
+
+  // Enable next button
+  const nextBtn = document.getElementById('next-' + stepId);
+  if (nextBtn) nextBtn.disabled = false;
+}
+
+function goNext(stepId) {
+  const ans = state.answers[stepId];
+  if (!ans) return;
+
+  state.history.push(stepId);
+
+  if (ans.next === 'result') {
+    buildResult();
+  } else {
+    goToStep(ans.next);
+  }
+}
+
+function goBack() {
+  if (state.history.length === 0) return;
+  const prev = state.history.pop();
+  goToStep(prev);
+}
+
+function restart(keepScenario = false) {
+  if (!keepScenario) {
+    state.scenario = null;
+    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+  }
+  state.step = 0;
+  state.answers = {};
+  state.history = [];
+
+  // Remove all created nodes
+  document.querySelectorAll('.node').forEach(n => n.remove());
+  document.getElementById('resultPanel').classList.remove('active');
+  document.getElementById('resultPanel').innerHTML = '';
+
+  const treeArea = document.getElementById('treeArea');
+  if (!keepScenario) {
+    treeArea.innerHTML = `<div style="text-align:center; padding: 80px 0; color: var(--ink-muted); font-family: 'Instrument Serif', serif; font-style:italic; font-size:18px;">Select your situation above to begin.</div>`;
+  } else {
+    treeArea.innerHTML = '';
+  }
+
+  document.getElementById('breadcrumb').innerHTML = '';
+  document.getElementById('progressFill').style.width = '0%';
+  document.getElementById('progressStep').textContent = '0 / 4';
+  document.getElementById('progressBar').style.opacity = state.scenario ? '1' : '0.4';
+}
+
+function updateProgress() {
+  const totalSteps = 4;
+  const answered = Object.keys(state.answers).length;
+  const pct = Math.min(100, Math.round((answered / totalSteps) * 100));
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressStep').textContent = answered + ' / ' + totalSteps;
+}
+
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  const stepOrder = ['q1', 'q1b', 'q1c', 'q2', 'q2b', 'q3', 'q4', 'q4_skip'];
+  const items = [];
+
+  for (const sid of stepOrder) {
+    const ans = state.answers[sid];
+    if (ans) {
+      const shortLabel = {
+        q1: 'Primary structure', q1b: 'Shared check', q1c: 'Separation',
+        q2: 'Parallel type', q2b: 'RCL level',
+        q3: 'Conv. level', q4: 'No. of secondaries', q4_skip: 'Also secondary?'
+      }[sid] || sid;
+      items.push(`<div class="crumb-item answered"><span>${shortLabel}</span><span class="crumb-sep">·</span><span>${truncate(ans.optionLabel, 22)}</span></div>`);
+    }
+  }
+
+  bc.innerHTML = items.join('');
+}
+
+function truncate(str, n) {
+  return str.length > n ? str.slice(0, n) + '…' : str;
+}
+</script>
+</body>
+</html>
